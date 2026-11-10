@@ -48,6 +48,8 @@ register_types :: proc(L: ^lua.State) {
 
     // image
     lua.L_newmetatable(L, "luaslove.graphics.Image")
+    lua.pushcfunction(L, delete_image)
+    lua.setfield(L, -2, "__gc")
     lua.pushvalue(L, -1)
     lua.setfield(L, -2, "__index")
 
@@ -125,5 +127,14 @@ lua_image_set_wrap :: proc "c" (L: ^lua.State) -> c.int {
     image.wrap = lutils.Lu_checkenum(L, 2, WrapMode, context.allocator)
     rl.SetTextureWrap(image.texture, cast(rl.TextureWrap)image.wrap)
 
+    return 0
+}
+
+delete_image :: proc "c" (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    image := cast(^Image)lua.L_checkudata(L, 1, "luaslove.graphics.Image")
+    lua.L_argcheck(L, image == nil, 1, "missing image object");
+
+    rl.UnloadTexture(image.texture)
     return 0
 }

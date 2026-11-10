@@ -17,6 +17,7 @@ Graphics_Module_LReg :: []lua.L_Reg{
     {"getColor", lua_get_color},
     {"setColor", lua_set_color},
     {"newImage", lua_new_image},
+    {"draw", lua_draw},
     {nil, nil},
 }
 
@@ -126,4 +127,23 @@ lua_new_image :: proc "c" (L: ^lua.State) -> c.int {
     lua.L_setmetatable(L, "luaslove.graphics.Image")
 
     return 1
+}
+
+lua_draw :: proc "c" (L: ^lua.State) -> c.int {
+    image := cast(^Image)lua.L_checkudata(L, 1, "luaslove.graphics.Image")
+    lua.L_argcheck(L, image == nil, 1, "missing image object");
+
+    x :=  f32(lua.L_optnumber(L, 2,  0))
+    y :=  f32(lua.L_optnumber(L, 3,  0))
+    r :=  f32(lua.L_optnumber(L, 4,  0))
+    sx := f32(lua.L_optnumber(L, 5,  1))
+    sy := f32(lua.L_optnumber(L, 6, lua.Number(sx)))
+    ox := f32(lua.L_optnumber(L, 7,  0))
+    oy := f32(lua.L_optnumber(L, 8,  0))
+
+    rl.DrawTexturePro(image.texture, 
+        {0, 0, f32(image.texture.width), f32(image.texture.height)}, 
+        {x, y, f32(image.texture.width) * sx, f32(image.texture.height) * sy,},
+    {ox, oy}, r, rl.WHITE)
+    return 0
 }
