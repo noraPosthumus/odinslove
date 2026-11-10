@@ -3,7 +3,7 @@
 ---@alias DrawMode "fill" | "line"
 
 ---@alias FilterMode "nearest" | "linear"
----@alias WrapMode "clampzero" | "clamp" | "repeat" | "mirroredrepeat"
+---@alias WrapMode "repeat" | "clamp" | "mirroredrepeat" | "mirroredclamp"
 ---@alias Drawable Image
 
 ---@class Color

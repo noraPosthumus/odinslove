@@ -2,8 +2,6 @@ function odinslove.load()
     print("Hellope, Lua!")
 
     image = odinslove.graphics.newImage("test.png")
-    image:setFilter("nearest")
-    print(image:getFilter())
 end
 
 function odinslove.draw()

@@ -21,10 +21,10 @@ FilterMode :: enum{
 }
 
 WrapMode :: enum{
-    clampzero,
+    repeat = 0,
     clamp,
-    repeat,
     mirroredrepeat,
+    mirroredclamp,
 }
 
 Image :: struct{
@@ -39,8 +39,8 @@ Image_Meta :: []lua.L_Reg{
     {"getWidth", lua_image_get_width},
     {"getFilter", lua_image_get_filter},
     {"setFilter", lua_image_set_filter},
-    {"getWrap", nil},
-    {"setWrap", nil},
+    {"getWrap", lua_image_get_wrap},
+    {"setWrap", lua_image_set_wrap},
     {nil, nil},
 }
 
@@ -87,10 +87,10 @@ lua_image_get_filter :: proc "c" (L: ^lua.State) -> c.int {
     image := cast(^Image)lua.L_checkudata(L, 1, "luaslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object");
 
-    filter_text := strings.clone_to_cstring(reflect.enum_string(image.filter))
-    defer delete(filter_text)
+    filter_mode_text := strings.clone_to_cstring(reflect.enum_string(image.filter))
+    defer delete(filter_mode_text)
 
-    lua.pushstring(L, filter_text )
+    lua.pushstring(L, filter_mode_text )
     return 1
 }
 
@@ -100,5 +100,30 @@ lua_image_set_filter :: proc "c" (L: ^lua.State) -> c.int {
     lua.L_argcheck(L, image == nil, 1, "missing image object");
 
     image.filter = lutils.Lu_checkenum(L, 2, FilterMode, context.allocator)
+    rl.SetTextureFilter(image.texture, image.filter == .nearest ? .POINT : .BILINEAR)
+
+    return 0
+}
+
+lua_image_get_wrap:: proc "c" (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    image := cast(^Image)lua.L_checkudata(L, 1, "luaslove.graphics.Image")
+    lua.L_argcheck(L, image == nil, 1, "missing image object");
+
+    wrap_mode_text := strings.clone_to_cstring(reflect.enum_string(image.wrap))
+    defer delete(wrap_mode_text)
+
+    lua.pushstring(L, wrap_mode_text )
+    return 1
+}
+
+lua_image_set_wrap :: proc "c" (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    image := cast(^Image)lua.L_checkudata(L, 1, "luaslove.graphics.Image")
+    lua.L_argcheck(L, image == nil, 1, "missing image object");
+
+    image.wrap = lutils.Lu_checkenum(L, 2, WrapMode, context.allocator)
+    rl.SetTextureWrap(image.texture, cast(rl.TextureWrap)image.wrap)
+
     return 0
 }
