@@ -6,6 +6,7 @@ import "core:strings"
 import "base:runtime"
 import rl "vendor:raylib"
 import lua "vendor:lua/5.4"
+import "../../lutils"
 
 DrawMode :: enum{
     fill,
@@ -37,7 +38,7 @@ Image_Meta :: []lua.L_Reg{
     {"getHeight", lua_image_get_height},
     {"getWidth", lua_image_get_width},
     {"getFilter", lua_image_get_filter},
-    {"setFilter", nil},
+    {"setFilter", lua_image_set_filter},
     {"getWrap", nil},
     {"setWrap", nil},
     {nil, nil},
@@ -91,4 +92,13 @@ lua_image_get_filter :: proc "c" (L: ^lua.State) -> c.int {
 
     lua.pushstring(L, filter_text )
     return 1
+}
+
+lua_image_set_filter :: proc "c" (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    image := cast(^Image)lua.L_checkudata(L, 1, "luaslove.graphics.Image")
+    lua.L_argcheck(L, image == nil, 1, "missing image object");
+
+    image.filter = lutils.Lu_checkenum(L, 2, FilterMode, context.allocator)
+    return 0
 }

@@ -1,7 +1,5 @@
-package odinslove
+package main
 
-import "base:runtime"
-import "core:strings"
 import "core:c"
 import "core:fmt"
 import "core:os"
@@ -9,20 +7,16 @@ import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
 import graphics "modules/graphics"
 
-Args :: struct {
-	gamedir: string
-}
-
 main :: proc() {
+	if len(os.args) < 2 do panic("Missing path to game files")
 
-	args := parse_args(context.allocator)
-	defer free(args)
-	
+	rl.ChangeDirectory(fmt.caprint(os.args[1]))
+
 	rl.InitWindow(800, 600, "Odinslove")
 
 	L := init_lua()
 
-	result := lua.L_dofile(L, fmt.caprintf("%s/main.lua", args.gamedir))
+	result := lua.L_dofile(L, "main.lua")
 	
 	if result != c.int(lua.Status.OK) {
 		error := lua.tostring(L, -1)
@@ -43,13 +37,6 @@ main :: proc() {
 	call_quit(L)
 
 	rl.CloseWindow()
-}
-
-parse_args :: proc(allocator: runtime.Allocator) -> ^Args {
-	if len(os.args) < 2 do panic("Missing path to game files")
-	result := new(Args, allocator)
-	result.gamedir = os.args[1]
-	return result
 }
 
 init_lua :: proc() -> ^lua.State {

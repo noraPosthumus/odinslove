@@ -15,13 +15,13 @@ Color = {}
 
 ---@class Image
 ---@field private texture userdata
----@field getDimensions fun(): x: number, y: number
----@field getHeight fun(): number
----@field getWidth fun(): number
----@field getFilter fun(): FilterMode
----@field setFilter fun(filter: FilterMode)
----@field getWrap fun() : WrapMode
----@field setWrap fun(wrap: WrapMode)
+---@field getDimensions fun(self: Image): x: number, y: number
+---@field getHeight fun(self: Image): number
+---@field getWidth fun(self: Image): number
+---@field getFilter fun(self: Image): FilterMode
+---@field setFilter fun(self: Image, filter: FilterMode)
+---@field getWrap fun(self: Image) : WrapMode
+---@field setWrap fun(self: Image, wrap: WrapMode)
 Image = {}
 
 ---@class graphics
