@@ -1,11 +1,13 @@
 package main
 
+import "base:runtime"
 import "core:c"
 import "core:fmt"
 import "core:os"
 import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
-import graphics "modules/graphics"
+import "modules/graphics"
+import "modules/audio"
 
 main :: proc() {
 	if len(os.args) < 2 do panic("Missing path to game files")
@@ -25,6 +27,8 @@ main :: proc() {
         lua.pop(L, 1)
 	}
 	
+    rl.InitAudioDevice(); 
+
 	call_load(L)
 
 	for !rl.WindowShouldClose() {
@@ -32,10 +36,14 @@ main :: proc() {
 		rl.BeginDrawing()
 			call_draw(L)
 		rl.EndDrawing()
+
+		free_all(context.temp_allocator)
 	}
 
 	call_quit(L)
 
+	free_all()
+	rl.CloseAudioDevice();
 	rl.CloseWindow()
 }
 
@@ -48,6 +56,9 @@ init_lua :: proc() -> ^lua.State {
 
 	graphics.require_graphics(L)
 	lua.setfield(L, -2, "graphics")
+
+	audio.require_audio(L)
+	lua.setfield(L, -2, "audio")
 
 	lua.setglobal(L, "odinslove")
 	return L

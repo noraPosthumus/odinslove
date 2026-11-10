@@ -25,7 +25,6 @@ Color = {}
 Image = {}
 
 ---@class graphics
----@field private color Color
 local graphics = {}
 
 ---@param mode   DrawMode

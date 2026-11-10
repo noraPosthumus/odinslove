@@ -38,14 +38,14 @@ open_graphics :: proc "c" (L: ^lua.State) -> c.int {
 }
 
 get_graphics_context :: proc "c" (L: ^lua.State) -> ^Graphics_Context {
-    lua.getfield(L, lua.REGISTRYINDEX, "luaslove.graphics.graphics_context")
+    lua.getfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
 
     if !lua.isuserdata(L, -1) { // if no graphics context exists, create one
         lua.pop(L, 1)
         graphics := cast(^Graphics_Context)(lua.newuserdatauv(L, size_of(Graphics_Context), 0))
         graphics^ = Graphics_Context{{1,1,1,1}}
-        lua.setfield(L, lua.REGISTRYINDEX, "luaslove.graphics.graphics_context")
-        lua.getfield(L, lua.REGISTRYINDEX, "luaslove.graphics.graphics_context")
+        lua.setfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
+        lua.getfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
     }
 
     graphics_context := cast(^Graphics_Context)lua.touserdata(L, -1)
@@ -124,13 +124,13 @@ lua_new_image :: proc "c" (L: ^lua.State) -> c.int {
     image.texture = texture
     image.filter = .linear
 
-    lua.L_setmetatable(L, "luaslove.graphics.Image")
+    lua.L_setmetatable(L, "odinslove.graphics.Image")
 
     return 1
 }
 
 lua_draw :: proc "c" (L: ^lua.State) -> c.int {
-    image := cast(^Image)lua.L_checkudata(L, 1, "luaslove.graphics.Image")
+    image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object");
 
     x :=  f32(lua.L_optnumber(L, 2,  0))
