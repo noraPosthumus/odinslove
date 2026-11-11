@@ -41,6 +41,7 @@ main :: proc() {
 	}
 
 	call_quit(L)
+	lua.close(L)
 
 	free_all()
 	rl.CloseAudioDevice();
@@ -119,5 +120,4 @@ call_quit :: proc(L: ^lua.State) {
 		}
 	}
 	lua.pop(L, 1)
-	lua.close(L)
 }

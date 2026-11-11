@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:c"
 import rl "vendor:raylib"
 import lua "vendor:lua/5.4"
+import "../../lutils"
 
 MODNAME :: "odinslove.audio"
 
@@ -38,12 +39,26 @@ require_audio :: proc (L: ^lua.State) {
 }
 
 lua_new_source :: proc "c" (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    n_args := lua.gettop(L)
+
     filename := lua.L_checkstring(L, 1)
 
-    sound := rl.LoadSound(filename)
+    type : SourceType
+    if n_args >= 2 {
+        type = lutils.Lu_checkenum(L, 2, SourceType, context.allocator)
+    } else {
+        type = .static
+    }
 
     source := cast(^Source)lua.newuserdata(L, size_of(Source))
-    source.sound = sound
+
+    switch type {
+        case .static:
+            source.audio = rl.LoadSound(filename)
+        case .stream:
+            source.audio = rl.LoadMusicStream(filename)
+    }
 
     lua.L_setmetatable(L, "odinslove.audio.Source")
 

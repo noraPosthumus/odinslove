@@ -1,5 +1,7 @@
 ---@meta audio
 
+---@alias SourceType "static" | "stream"
+
 ---@class Source
 ---@field getVolume fun( self: Source ): number
 ---@field setVolume fun( self: Source, volume: number )
@@ -12,7 +14,7 @@ Source = {}
 ---@class audio
 ---@field getVolume fun(): number
 ---@field setVolume fun( volume: number )
----@field newSource fun( filename: string ): Source
+---@field newSource fun( filename: string, type?: SourceType ): Source
 ---@field play fun( source: Source, ... )
 ---@field pause fun( ): ( sources: table )
 ---@field pause fun( source: Source, ... )

@@ -1,14 +1,18 @@
 package audio
 
 import "base:runtime"
-import "core:fmt"
 import "core:c"
 import rl "vendor:raylib"
 import lua "vendor:lua/5.4"
 import "../../lutils"
 
+SourceType :: enum{
+    static,
+    stream,
+}
+
 Source :: struct{
-    sound: rl.Sound,
+    audio: union{rl.Music, rl.Sound,},
     volume: lua.Number,
 }
 
@@ -40,7 +44,12 @@ delete_source :: proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
-    rl.UnloadSound(source.sound)
+    switch audio in source.audio {
+        case rl.Music:
+            rl.UnloadMusicStream(audio)
+        case rl.Sound:
+            rl.UnloadSound(audio)
+    }
     return 0
 }
 
@@ -57,7 +66,12 @@ source_set_volume :: proc "c" (L: ^lua.State) -> c.int {
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
     source.volume = lua.L_checknumber(L, 2)
-    rl.SetSoundVolume(source.sound, f32(source.volume))
+    switch audio in source.audio {
+        case rl.Music:
+            rl.SetMusicVolume(audio, f32(source.volume))
+        case rl.Sound:
+            rl.SetSoundVolume(audio, f32(source.volume))
+    }
     return 0
 }
 
@@ -65,6 +79,51 @@ source_play :: proc "c"  (L: ^lua.State) -> c.int {
     context = runtime.default_context()
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
-    rl.PlaySound(source.sound)
+    switch audio in source.audio {
+        case rl.Music:
+            rl.PlayMusicStream(audio)
+        case rl.Sound:
+            rl.PlaySound(audio)
+    }
+    return 0
+}
+
+source_pause :: proc "c"  (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+
+   switch audio in source.audio {
+        case rl.Music:
+            rl.PauseMusicStream(audio)
+        case rl.Sound:
+            rl.PauseSound(audio)
+    }
+    return 0
+}
+
+source_stop :: proc "c"  (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+
+   switch audio in source.audio {
+        case rl.Music:
+            rl.StopMusicStream(audio)
+        case rl.Sound:
+            rl.StopSound(audio)
+    }
+    return 0
+}
+
+source_seek :: proc "c"  (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    position := lua.L_checknumber(L, 2)
+
+    switch audio in source.audio {
+        case rl.Music:
+            rl.SeekMusicStream(audio, f32(position))
+        case rl.Sound:
+            lua.L_argerror(L, 1, "(Seeking is only allowed on sources of type \"stream\")")
+    }
     return 0
 }
