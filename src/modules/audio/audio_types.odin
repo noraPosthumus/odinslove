@@ -1,5 +1,6 @@
 package audio
 
+import "core:fmt"
 import "base:runtime"
 import "core:c"
 import rl "vendor:raylib"
@@ -12,17 +13,19 @@ SourceType :: enum{
 }
 
 Source :: struct{
+    id: int,
     audio: union{rl.Music, rl.Sound,},
     volume: lua.Number,
+    paused: bool,
 }
 
 Source_Meta :: []lua.L_Reg{
     {"getVolume", source_get_volume},
     {"setVolume", source_set_volume},
     {"play", source_play},
-    {"pause", nil},
-    {"seek", nil},
-    {"stop", nil},
+    {"pause", source_pause},
+    {"seek", source_seek},
+    {"stop", source_stop},
     {nil, nil},
 }
 
@@ -46,10 +49,25 @@ delete_source :: proc "c" (L: ^lua.State) -> c.int {
 
     switch audio in source.audio {
         case rl.Music:
-            rl.UnloadMusicStream(audio)
+            if rl.IsMusicValid(audio) do rl.UnloadMusicStream(audio)
         case rl.Sound:
-            rl.UnloadSound(audio)
+            if rl.IsSoundValid(audio) do rl.UnloadSound(audio)
     }
+
+    lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
+    type := lua.getiuservalue(L, -1, 1)
+
+    if type != auto_cast lua.TTABLE do return {}
+
+    audio_context := get_audio_context(L)
+    lua.rawgeti(L, -1, auto_cast source.id)
+    for refrence, i in audio_context.source_refrences {
+        if refrence == source.id {
+            unordered_remove(audio_context.source_refrences, i)
+        }
+    }
+    shrink(audio_context.source_refrences)
+
     return 0
 }
 
@@ -81,9 +99,11 @@ source_play :: proc "c"  (L: ^lua.State) -> c.int {
 
     switch audio in source.audio {
         case rl.Music:
-            rl.PlayMusicStream(audio)
+            if source.paused do rl.ResumeMusicStream(audio)
+                else do rl.PlayMusicStream(audio)
         case rl.Sound:
-            rl.PlaySound(audio)
+            if source.paused do rl.ResumeSound(audio)
+                else do rl.PlaySound(audio)
     }
     return 0
 }
@@ -108,8 +128,10 @@ source_stop :: proc "c"  (L: ^lua.State) -> c.int {
    switch audio in source.audio {
         case rl.Music:
             rl.StopMusicStream(audio)
+            source.paused = false
         case rl.Sound:
             rl.StopSound(audio)
+            source.paused = false
     }
     return 0
 }

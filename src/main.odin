@@ -32,7 +32,14 @@ main :: proc() {
 	call_load(L)
 
 	for !rl.WindowShouldClose() {
+		for audio_source in audio.get_all_sources(L) {
+			#partial switch audio in audio_source.audio {
+				case rl.Music: rl.UpdateMusicStream(audio)
+			}
+		}
+
 		call_update(L, rl.GetFrameTime())
+
 		rl.BeginDrawing()
 			call_draw(L)
 		rl.EndDrawing()
