@@ -1,13 +1,13 @@
 package tests
 
+import "core:image"
 import "core:image/png"
 import "core:testing"
-import "core:image"
 
-import rl "vendor:raylib"
+import ol "odinslove:core"
+import "odinslove:modules/graphics"
 import lua "vendor:lua/5.4"
-import odinslove"../src"
-import "../src/modules/graphics"
+import rl "vendor:raylib"
 
 prepare :: proc() -> ^lua.State {
     rl.SetTraceLogLevel(.NONE)
@@ -15,14 +15,14 @@ prepare :: proc() -> ^lua.State {
     rl.InitWindow(800, 600, "Tests")
     rl.ChangeDirectory(#directory)
 
-    L := odinslove.init_lua()
+    L := ol.init()
     lua.open_debug(L)
 
     return L
 }
 
 cleanup :: proc(L: ^lua.State) {
-    lua.close(L)
+    ol.quit(L)
 
     rl.CloseWindow()
 }
@@ -44,18 +44,34 @@ library_registration :: proc(t: ^testing.T) {
 
     testing.expect(t, lua.getglobal(L, "odinslove") == auto_cast lua.TTABLE, "Luaslove global table doesn't exist")
 
-    testing.expect(t, lua.getfield(L, -1, "graphics") == auto_cast lua.TTABLE, "Graphics submodule isn't available as field of luaslove")
+    testing.expect(
+        t,
+        lua.getfield(L, -1, "graphics") == auto_cast lua.TTABLE,
+        "Graphics submodule isn't available as field of luaslove",
+    )
     lua.pop(L, 1)
 
-    testing.expect(t, lua.getfield(L, -1, "audio") == auto_cast lua.TTABLE, "Audio submodule isn't available as field of luaslove")
+    testing.expect(
+        t,
+        lua.getfield(L, -1, "audio") == auto_cast lua.TTABLE,
+        "Audio submodule isn't available as field of luaslove",
+    )
     lua.pop(L, 1)
 
     lua.getfield(L, lua.REGISTRYINDEX, lua.LOADED_TABLE)
-    
-    testing.expect(t, lua.getfield(L, -1, "odinslove.graphics") == auto_cast lua.TTABLE, "Graphics submodule isn't registered")
+
+    testing.expect(
+        t,
+        lua.getfield(L, -1, "odinslove.graphics") == auto_cast lua.TTABLE,
+        "Graphics submodule isn't registered",
+    )
     lua.pop(L, 1)
 
-    testing.expect(t, lua.getfield(L, -1, "odinslove.audio") == auto_cast lua.TTABLE, "Audio submodule isn't registered")
+    testing.expect(
+        t,
+        lua.getfield(L, -1, "odinslove.audio") == auto_cast lua.TTABLE,
+        "Audio submodule isn't registered",
+    )
     lua.pop(L, 2)
 
 }
@@ -65,7 +81,12 @@ images :: proc(t: ^testing.T) {
     L := prepare()
     defer cleanup(L)
 
-    refrence_image := png.load_from_file(#directory + "resources/test.png") or_else testing.fail_now(t, "failed to load refrence image")
+    refrence_image :=
+        png.load_from_file(#directory + "resources/test.png") or_else testing.fail_now(
+            t,
+            "failed to load refrence image",
+        )
+    defer png.destroy(refrence_image)
 
     //odinslove.graphics.newImage()
     lua.L_dostring(L, "image = odinslove.graphics.newImage(\"resources/test.png\")")
@@ -79,18 +100,18 @@ images :: proc(t: ^testing.T) {
     width := int(lua.tointeger(L, -1))
     lua.getglobal(L, "height")
     height := int(lua.tointeger(L, -1))
-    testing.expect_value(t, width, refrence_image.width,)
-    testing.expect_value(t, height, refrence_image.height,)
+    testing.expect_value(t, width, refrence_image.width)
+    testing.expect_value(t, height, refrence_image.height)
 
     //image:getWidth()
     lua.L_dostring(L, "width_2 = image:getWidth()")
     lua.getglobal(L, "width_2")
     width = int(lua.tointeger(L, -1))
-    testing.expect_value(t, width, refrence_image.width,)
+    testing.expect_value(t, width, refrence_image.width)
 
     //image:getHeight()
     lua.L_dostring(L, "height_2 = image:getHeight()")
     lua.getglobal(L, "height_2")
     height = int(lua.tointeger(L, -1))
-    testing.expect_value(t, height, refrence_image.height,)
+    testing.expect_value(t, height, refrence_image.height)
 }

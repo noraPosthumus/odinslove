@@ -6,7 +6,7 @@
 ---@field getVolume fun( self: Source ): number
 ---@field setVolume fun( self: Source, volume: number )
 ---@field play fun( self: Source )
----@field seek fun( self: Source, offset: number, unit?: "seconds" | "samples" )
+---@field seek fun( self: Source, offset: number ) only supports Sources of type "stream"
 ---@field pause fun( self: Source )
 ---@field stop fun( self: Source )
 Source = {}

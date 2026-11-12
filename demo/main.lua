@@ -3,10 +3,16 @@ function odinslove.load()
 
     image = odinslove.graphics.newImage("test.png")
 
-    test_sound = odinslove.audio.newSource("test.wav")
+    test_sound = odinslove.audio.newSource("test.wav", "stream")
+    other_sound = odinslove.audio.newSource("test.wav", "stream")
 
     test_sound:play()
-
+    test_sound:seek(15)
+    audios = odinslove.audio.pause()
+    for i, audio in ipairs(audios) do
+        print(i)
+        audio:play()
+    end
 end
 
 function odinslove.draw()
