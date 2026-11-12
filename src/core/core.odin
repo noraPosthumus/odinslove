@@ -1,6 +1,6 @@
 package core
 
-import "base:runtime"
+import "core:os"
 import "odinslove:modules/audio"
 import "odinslove:modules/graphics"
 import "core:c"
@@ -18,8 +18,8 @@ Libs :: enum{
 init :: proc(lua_source_files: ..cstring, libs: bit_set[Libs] = {.base, .graphics, .audio}, lua_source_code: cstring = "") -> ^lua.State {
 
     if !rl.IsWindowReady() {
-        rl.TraceLog(.ERROR, "Window not initialized. Make sure to call `rl.InitWindow()` before initializing odinslove.")
-        runtime.exit(1)
+        rl.TraceLog(.FATAL, "Window not initialized. Make sure to call `rl.InitWindow()` before initializing odinslove.")
+        os.exit(1)
     }
     
     if !rl.IsAudioDeviceReady() && .audio in libs {
@@ -60,6 +60,10 @@ update :: proc(L: ^lua.State, delta_time : f32) {
     for audio_source in audio.get_all_sources(L) {
         #partial switch audio in audio_source.audio {
         case rl.Music:
+            if !rl.IsAudioDeviceReady() {
+                rl.TraceLog(.FATAL, "Missing audio device. Don't forget to call `rl.InitAudioDevice()` before loading any audio.")
+                os.exit(1)
+            }
             rl.UpdateMusicStream(audio)
         }
     }

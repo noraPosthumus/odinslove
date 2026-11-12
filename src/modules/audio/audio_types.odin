@@ -91,8 +91,10 @@ source_set_volume :: proc "c" (L: ^lua.State) -> c.int {
     source.volume = lua.L_checknumber(L, 2)
     switch audio in source.audio {
     case rl.Music:
+        if !rl.IsMusicReady(audio) do handle_invalid_audio_error(L)
         rl.SetMusicVolume(audio, f32(source.volume))
     case rl.Sound:
+        if !rl.IsSoundValid(audio) do handle_invalid_audio_error(L)
         rl.SetSoundVolume(audio, f32(source.volume))
     }
     return 0
@@ -104,9 +106,11 @@ source_play :: proc "c" (L: ^lua.State) -> c.int {
 
     switch audio in source.audio {
     case rl.Music:
+        if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
         if source.paused do rl.ResumeMusicStream(audio)
         else do rl.PlayMusicStream(audio)
     case rl.Sound:
+        if !rl.IsSoundValid(audio) do handle_invalid_audio_error(L)
         if source.paused do rl.ResumeSound(audio)
         else do rl.PlaySound(audio)
     }
@@ -119,8 +123,10 @@ source_pause :: proc "c" (L: ^lua.State) -> c.int {
 
     switch audio in source.audio {
     case rl.Music:
+        if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
         rl.PauseMusicStream(audio)
     case rl.Sound:
+        if !rl.IsSoundValid(audio) do handle_invalid_audio_error(L)
         rl.PauseSound(audio)
     }
     return 0
@@ -132,9 +138,11 @@ source_stop :: proc "c" (L: ^lua.State) -> c.int {
 
     switch audio in source.audio {
     case rl.Music:
+        if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
         rl.StopMusicStream(audio)
         source.paused = false
     case rl.Sound:
+        if !rl.IsSoundValid(audio) do handle_invalid_audio_error(L)
         rl.StopSound(audio)
         source.paused = false
     }
@@ -148,6 +156,7 @@ source_seek :: proc "c" (L: ^lua.State) -> c.int {
 
     switch audio in source.audio {
     case rl.Music:
+        if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
         rl.SeekMusicStream(audio, f32(position))
     case rl.Sound:
         lua.L_argerror(L, 1, "(Seeking is only allowed on sources of type \"stream\")")

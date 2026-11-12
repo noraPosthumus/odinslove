@@ -1,6 +1,4 @@
 function odinslove.load()
-    print("Hellope, Lua!")
-
     image = odinslove.graphics.newImage("test.png")
 
     test_sound = odinslove.audio.newSource("test.wav", "stream")
@@ -10,7 +8,6 @@ function odinslove.load()
     test_sound:seek(15)
     audios = odinslove.audio.pause()
     for i, audio in ipairs(audios) do
-        print(i)
         audio:play()
     end
 end

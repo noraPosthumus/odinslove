@@ -3,6 +3,7 @@ package audio
 import "../../lutils"
 import "base:runtime"
 import "core:c"
+import "core:os"
 import "core:fmt"
 import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
@@ -57,7 +58,7 @@ get_audio_context :: proc "c" (L: ^lua.State) -> ^Audio_Context {
 
     lua.pop(L, 1)
     if audio_context == nil {
-        lua.pushstring(L, "failed to access graphics context")
+        lua.pushstring(L, "Failed to access audio context.")
         lua.error(L)
     }
 
@@ -74,7 +75,10 @@ get_all_sources :: proc "c" (L: ^lua.State) -> []^Source {
     lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
     type := lua.getiuservalue(L, -1, 1)
 
-    if type != auto_cast lua.TTABLE do return {}
+    if type != auto_cast lua.TTABLE {
+        lua.pushstring(L, "Failed to access audio sources.")
+        lua.error(L)
+    }
 
     for source_ref in audio_context.source_refrences {
         type = lua.rawgeti(L, -1, auto_cast source_ref)
@@ -114,6 +118,9 @@ open_audio : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 @(private)
 new_source : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
+
+    check_if_audio_device_is_ready()
+
     n_args := lua.gettop(L)
 
     audio_context := get_audio_context(L)
@@ -153,12 +160,16 @@ new_source : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 get_volume : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    check_if_audio_device_is_ready()
+
     lua.pushnumber(L, lua.Number(rl.GetMasterVolume()))
     return 1
 }
 
 @(private)
 set_volume : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    check_if_audio_device_is_ready()
+
     volume := lua.L_checknumber(L, 1)
     rl.SetMasterVolume(f32(volume))
     return 0
@@ -172,10 +183,12 @@ play : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
         source := lutils.Lu_checkudataoftype(L, i, Source, MODNAME)
         switch audio in source.audio {
         case rl.Music:
+            if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
             if source.paused do rl.ResumeMusicStream(audio)
             else do rl.PlayMusicStream(audio)
             source.paused = false
         case rl.Sound:
+            if !rl.IsSoundValid(audio) do handle_invalid_audio_error(L)
             if source.paused do rl.ResumeSound(audio)
             else do rl.PlaySound(audio)
             source.paused = false
@@ -207,6 +220,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
             source := cast(^Source)lua.touserdata(L, -1)
             switch audio in source.audio {
             case rl.Music:
+                if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
                 if rl.IsMusicStreamPlaying(audio) {
                     rl.PauseMusicStream(audio)
                     source.paused = true
@@ -214,6 +228,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
                     i += 1
                 }
             case rl.Sound:
+                if !rl.IsSoundValid(audio) do handle_invalid_audio_error(L)
                 if rl.IsSoundPlaying(audio) {
                     rl.PauseSound(audio)
                     source.paused = true
@@ -231,12 +246,26 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
         source := lutils.Lu_checkudataoftype(L, i, Source, MODNAME)
         switch audio in source.audio {
         case rl.Music:
+            if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
             rl.PauseMusicStream(audio)
             source.paused = true
         case rl.Sound:
+            if !rl.IsSoundValid(audio) do handle_invalid_audio_error(L)
             rl.PauseSound(audio)
             source.paused = true
         }
     }
     return 0
+}
+
+handle_invalid_audio_error :: proc "c" (L: ^lua.State) {
+    lua.pushstring(L, "Invalid audio source.")
+    lua.error(L)
+}
+
+check_if_audio_device_is_ready :: proc "c" () {
+    if !rl.IsAudioDeviceReady() {
+        rl.TraceLog(.FATAL, "Missing audio device. Don't forget to call `rl.InitAudioDevice()` before loading any audio.")
+        os.exit(1)
+    }
 }
