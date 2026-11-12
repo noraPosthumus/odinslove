@@ -14,7 +14,7 @@ Graphics_Context :: struct {
 }
 
 @(private)
-Graphics_Module_LReg :: []lua.L_Reg {
+Graphics_Module_Library :: []lua.L_Reg {
     {"clear", clear},
     {"circle", circle},
     {"getColor", get_color},
@@ -22,6 +22,11 @@ Graphics_Module_LReg :: []lua.L_Reg {
     {"newImage", new_image},
     {"draw", draw},
     {nil, nil},
+}
+
+// requires the graphics module and pushes it onto the stack.
+require_graphics :: proc(L: ^lua.State) {
+    lua.L_requiref(L, MODNAME, open_graphics, 0)
 }
 
 // Get the current graphics context. If no context exists, this creates a new one.
@@ -53,12 +58,6 @@ get_graphics_context :: proc "c" (L: ^lua.State) -> ^Graphics_Context {
     return graphics_context
 }
 
-
-// requires the graphics module and pushes it onto the stack.
-require_graphics :: proc(L: ^lua.State) {
-    lua.L_requiref(L, MODNAME, open_graphics, 0)
-}
-
 @(private)
 open_graphics: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
@@ -79,7 +78,7 @@ open_graphics: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     register_types(L)
 
-    lua.L_newlib(L, Graphics_Module_LReg)
+    lua.L_newlib(L, Graphics_Module_Library)
     return 1
 }
 

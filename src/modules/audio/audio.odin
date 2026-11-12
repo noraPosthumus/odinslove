@@ -13,55 +13,41 @@ Audio_Context :: struct {
     source_refrences: ^[dynamic]int,
 }
 
-Audio_Module_LReg :: []lua.L_Reg {
-    {"getVolume", lua_get_volume},
-    {"setVolume", lua_set_volume},
-    {"newSource", lua_new_source},
-    {"play", lua_play},
-    {"pause", lua_pause},
+@(private)
+Audio_Module_Library :: []lua.L_Reg {
+    {"getVolume", get_volume},
+    {"setVolume", set_volume},
+    {"newSource", new_source},
+    {"play", play},
+    {"pause", pause},
     {nil, nil},
 }
 
-open_audio :: proc "c" (L: ^lua.State) -> c.int {
-    context = runtime.default_context()
-
-    modname := lua.L_checkstring(L, 1)
-
-    if modname != MODNAME {
-        lua.pushstring(
-            L,
-            fmt.caprintf(
-                "Tried to require audio module with wrong module name ('%s' instead of '%s'",
-                modname,
-                MODNAME,
-            ),
-        )
-        lua.error(L)
-    }
-
-    register_types(L)
-
-    lua.L_newlib(L, Audio_Module_LReg)
-    return 1
-}
-
+// requires the audio module and pushes it onto the stack.
 require_audio :: proc(L: ^lua.State) {
     lua.L_requiref(L, MODNAME, open_audio, 0)
 }
 
+// Get the current audio context. If no context exists, this creates a new one.
 get_audio_context :: proc "c" (L: ^lua.State) -> ^Audio_Context {
     context = runtime.default_context()
     type := lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
 
-    if type != auto_cast lua.TUSERDATA {     // if no audio context exists, create one
+    // if no audio context exists, create one
+    if type != auto_cast lua.TUSERDATA {
         lua.pop(L, 1)
         audio_context := cast(^Audio_Context)(lua.newuserdatauv(L, size_of(Audio_Context), 1)) // "odinslove.audio.audio_context"
+
+        // initialize the list of refrences to all sources
         audio_context.source_refrences = new([dynamic]int)
-        lua.newtable(L) // "sources as a uservalue"
-        lua.newtable(L) // metatable because we want weak refrences
+
+        // Create a list to store weak refrences to all existing sources inside of lua, the keys to this table are to be stored inside of
+        // `audio_context.source_refrences` so we can access them later. 
+        lua.newtable(L)
+        lua.newtable(L) 
         lua.pushliteral(L, "v")
         lua.setfield(L, -2, "__mode")
-        lua.setmetatable(L, -2) // setmetatable(new_table,metatable)
+        lua.setmetatable(L, -2)
         lua.setiuservalue(L, -2, 1)
         lua.setfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
         lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
@@ -78,6 +64,7 @@ get_audio_context :: proc "c" (L: ^lua.State) -> ^Audio_Context {
     return audio_context
 }
 
+// get a list of all Source objects that currently exist 
 get_all_sources :: proc "c" (L: ^lua.State) -> []^Source {
     context = runtime.default_context()
     audio_context := get_audio_context(L)
@@ -100,7 +87,32 @@ get_all_sources :: proc "c" (L: ^lua.State) -> []^Source {
     return sources[:]
 }
 
-lua_new_source :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+open_audio : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+
+    modname := lua.L_checkstring(L, 1)
+
+    if modname != MODNAME {
+        lua.pushstring(
+            L,
+            fmt.caprintf(
+                "Tried to require audio module with wrong module name ('%s' instead of '%s'",
+                modname,
+                MODNAME,
+            ),
+        )
+        lua.error(L)
+    }
+
+    register_types(L)
+
+    lua.L_newlib(L, Audio_Module_Library)
+    return 1
+}
+
+@(private)
+new_source : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
     n_args := lua.gettop(L)
 
@@ -139,18 +151,21 @@ lua_new_source :: proc "c" (L: ^lua.State) -> c.int {
     return 1
 }
 
-lua_get_volume :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+get_volume : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     lua.pushnumber(L, lua.Number(rl.GetMasterVolume()))
     return 1
 }
 
-lua_set_volume :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+set_volume : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     volume := lua.L_checknumber(L, 1)
     rl.SetMasterVolume(f32(volume))
     return 0
 }
 
-lua_play :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+play : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     n_args := lua.gettop(L)
     if n_args == 0 do return 0
     for i in 1 ..= n_args {
@@ -170,7 +185,8 @@ lua_play :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
-lua_pause :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     n_args := lua.gettop(L)
 
     if n_args == 0 {
@@ -187,23 +203,22 @@ lua_pause :: proc "c" (L: ^lua.State) -> c.int {
             top := lua.gettop(L)
             defer lua.settop(L, top)
             type = lua.rawgeti(L, -1, auto_cast source_ref)
-            if type == auto_cast lua.TUSERDATA {
-                source := cast(^Source)lua.touserdata(L, -1)
-                switch audio in source.audio {
-                case rl.Music:
-                    if rl.IsMusicStreamPlaying(audio) {
-                        rl.PauseMusicStream(audio)
-                        source.paused = true
-                        lua.seti(L, -4, auto_cast i)
-                        i += 1
-                    }
-                case rl.Sound:
-                    if rl.IsSoundPlaying(audio) {
-                        rl.PauseSound(audio)
-                        source.paused = true
-                        lua.seti(L, -4, auto_cast i)
-                        i += 1
-                    }
+            if type != auto_cast lua.TUSERDATA do continue
+            source := cast(^Source)lua.touserdata(L, -1)
+            switch audio in source.audio {
+            case rl.Music:
+                if rl.IsMusicStreamPlaying(audio) {
+                    rl.PauseMusicStream(audio)
+                    source.paused = true
+                    lua.seti(L, -4, auto_cast i)
+                    i += 1
+                }
+            case rl.Sound:
+                if rl.IsSoundPlaying(audio) {
+                    rl.PauseSound(audio)
+                    source.paused = true
+                    lua.seti(L, -4, auto_cast i)
+                    i += 1
                 }
             }
         }

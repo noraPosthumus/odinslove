@@ -21,30 +21,33 @@ Source :: struct {
     paused: bool,
 }
 
-Source_Meta :: []lua.L_Reg {
+@(private)
+Source_Methods :: []lua.L_Reg {
     {"getVolume", source_get_volume},
     {"setVolume", source_set_volume},
     {"play", source_play},
     {"pause", source_pause},
     {"seek", source_seek},
     {"stop", source_stop},
+    {"__gc", delete_source},
     {nil, nil},
 }
 
+// Register all types defined by the graphics module
 register_types :: proc "c" (L: ^lua.State) {
 
     // Source
     lua.L_newmetatable(L, "odinslove.audio.Source")
-    lua.pushcfunction(L, delete_source)
-    lua.setfield(L, -2, "__gc")
+
     lua.pushvalue(L, -1)
     lua.setfield(L, -2, "__index")
 
-    lua.L_setfuncs(L, raw_data(Source_Meta), 0)
+    lua.L_setfuncs(L, raw_data(Source_Methods), 0)
 
     lua.pop(L, 1)
 }
 
+@(private)
 delete_source :: proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
@@ -73,6 +76,7 @@ delete_source :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
+@(private)
 source_get_volume :: proc "c" (L: ^lua.State) -> c.int {
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
@@ -80,6 +84,7 @@ source_get_volume :: proc "c" (L: ^lua.State) -> c.int {
     return 1
 }
 
+@(private)
 source_set_volume :: proc "c" (L: ^lua.State) -> c.int {
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
@@ -93,6 +98,7 @@ source_set_volume :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
+@(private)
 source_play :: proc "c" (L: ^lua.State) -> c.int {
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
@@ -107,6 +113,7 @@ source_play :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
+@(private)
 source_pause :: proc "c" (L: ^lua.State) -> c.int {
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
@@ -119,6 +126,7 @@ source_pause :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
+@(private)
 source_stop :: proc "c" (L: ^lua.State) -> c.int {
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
 
@@ -133,6 +141,7 @@ source_stop :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
+@(private)
 source_seek :: proc "c" (L: ^lua.State) -> c.int {
     source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
     position := lua.L_checknumber(L, 2)

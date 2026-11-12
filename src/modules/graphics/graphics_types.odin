@@ -28,37 +28,39 @@ WrapMode :: enum {
 }
 
 Image :: struct {
-    texture: rl.Texture,
-    filter:  FilterMode,
-    wrap:    WrapMode,
+    texture : rl.Texture,
+    filter :  FilterMode,
+    wrap :    WrapMode,
 }
 
-Image_Meta :: []lua.L_Reg {
-    {"getDimensions", lua_image_get_dimensions},
-    {"getHeight", lua_image_get_height},
-    {"getWidth", lua_image_get_width},
-    {"getFilter", lua_image_get_filter},
-    {"setFilter", lua_image_set_filter},
-    {"getWrap", lua_image_get_wrap},
-    {"setWrap", lua_image_set_wrap},
+@(private)
+Image_Methods :: []lua.L_Reg {
+    {"getDimensions", image_get_dimensions},
+    {"getHeight", image_get_height},
+    {"getWidth", image_get_width},
+    {"getFilter", image_get_filter},
+    {"setFilter", image_set_filter},
+    {"getWrap", image_get_wrap},
+    {"setWrap", image_set_wrap},
+    {"__gc", delete_image},
     {nil, nil},
 }
 
-register_types :: proc "c" (L: ^lua.State) {
+// Register all types defined by the graphics module
+register_types :: proc "c" (L : ^lua.State) {
 
     // image
     lua.L_newmetatable(L, "odinslove.graphics.Image")
-    lua.pushcfunction(L, delete_image)
-    lua.setfield(L, -2, "__gc")
     lua.pushvalue(L, -1)
     lua.setfield(L, -2, "__index")
 
-    lua.L_setfuncs(L, raw_data(Image_Meta), 0)
+    lua.L_setfuncs(L, raw_data(Image_Methods), 0)
 
     lua.pop(L, 1)
 }
 
-lua_image_get_dimensions :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+image_get_dimensions : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
 
@@ -68,7 +70,8 @@ lua_image_get_dimensions :: proc "c" (L: ^lua.State) -> c.int {
     return 2
 }
 
-lua_image_get_width :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+image_get_width : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
 
@@ -76,7 +79,8 @@ lua_image_get_width :: proc "c" (L: ^lua.State) -> c.int {
     return 1
 }
 
-lua_image_get_height :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+image_get_height : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
 
@@ -84,7 +88,8 @@ lua_image_get_height :: proc "c" (L: ^lua.State) -> c.int {
     return 1
 }
 
-lua_image_get_filter :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+image_get_filter : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     context = runtime.default_context()
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
@@ -96,7 +101,8 @@ lua_image_get_filter :: proc "c" (L: ^lua.State) -> c.int {
     return 1
 }
 
-lua_image_set_filter :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+image_set_filter : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
 
@@ -106,7 +112,8 @@ lua_image_set_filter :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
-lua_image_get_wrap :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+image_get_wrap : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     context = runtime.default_context()
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
@@ -118,7 +125,8 @@ lua_image_get_wrap :: proc "c" (L: ^lua.State) -> c.int {
     return 1
 }
 
-lua_image_set_wrap :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+image_set_wrap : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
 
@@ -128,7 +136,8 @@ lua_image_set_wrap :: proc "c" (L: ^lua.State) -> c.int {
     return 0
 }
 
-delete_image :: proc "c" (L: ^lua.State) -> c.int {
+@(private)
+delete_image : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
     lua.L_argcheck(L, image == nil, 1, "missing image object")
 
