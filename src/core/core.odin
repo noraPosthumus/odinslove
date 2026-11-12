@@ -1,5 +1,6 @@
 package core
 
+import "base:runtime"
 import "odinslove:modules/audio"
 import "odinslove:modules/graphics"
 import "core:c"
@@ -13,7 +14,18 @@ Libs :: enum{
 }
 
 // Initializes a new lua state, loads the specified libraries and runs the specified lua code. Also calls the "odinslove.load" callback inside lua.
+// Important: Call this after creating a raylib window.
 init :: proc(lua_source_files: ..cstring, libs: bit_set[Libs] = {.base, .graphics, .audio}, lua_source_code: cstring = "") -> ^lua.State {
+
+    if !rl.IsWindowReady() {
+        rl.TraceLog(.ERROR, "Window not initialized. Make sure to call `rl.InitWindow()` before initializing odinslove.")
+        runtime.exit(1)
+    }
+    
+    if !rl.IsAudioDeviceReady() && .audio in libs {
+        rl.TraceLog(.WARNING, "Missing audio device. Make sure to call `rl.InitAudioDevice()` before initializing odinslove.")
+    }
+
     L := init_lua(libs)
 
     if lua_source_code != "" {
