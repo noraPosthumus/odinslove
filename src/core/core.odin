@@ -68,6 +68,24 @@ update :: proc(L: ^lua.State, delta_time : f32) {
         }
     }
 
+    if rl.Vector2Length(rl.GetMouseDelta()) > 0.2 {
+        call_mousemoved(L, rl.GetMousePosition(), rl.GetMouseDelta())
+    }
+
+    for key := rl.GetKeyPressed(); key != rl.KeyboardKey.KEY_NULL; key = rl.GetKeyPressed() {
+        call_keypressed(L, key)
+    }
+
+    for mouse_button in rl.MouseButton {
+        if rl.IsMouseButtonPressed(mouse_button) {
+            call_mousepressed(L, rl.GetMousePosition(), mouse_button)
+        }
+    }
+
+    if rl.Vector2Length(rl.GetMouseWheelMoveV()) > 0.2 {
+        call_wheelmoved(L, rl.GetMouseWheelMoveV())
+    }
+
     call_update(L, delta_time)
 }
 
