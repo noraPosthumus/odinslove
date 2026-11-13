@@ -28,6 +28,9 @@ Graphics_Module_Library :: []lua.L_Reg {
     {"rectangle", rectangle},
     {"print", print},
     {"newFont", new_font},
+    {"getDimensions", get_dimensions},
+    {"getWidth", get_width},
+    {"getHeight", get_height},
     {nil, nil},
 }
 
@@ -127,7 +130,7 @@ rectangle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     x := f32(lua.L_checknumber(L, 2))
     y := f32(lua.L_checknumber(L, 3))
     width := f32(lua.L_checknumber(L, 4))
-    height := f32(lua.L_checknumber(L, 5))
+    height := f32(lua.L_optnumber(L, 5, auto_cast width))
     roundness := f32(lua.L_optnumber(L, 6, 0))
     segments := i32(lua.L_optinteger(L, 7, 1))
 
@@ -215,6 +218,15 @@ get_color: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 set_color: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     graphics_context := get_graphics_context(L)
 
+    if lua.istable(L, 1) {
+        for i in 1 ..= 4 {
+            lua.geti(L, 1, auto_cast i)
+            graphics_context.color[i - 1] = f32(lua.tointeger(L, -1))
+            lua.pop(L, 1)
+        }
+        return 0
+    }
+
     for i in 1 ..= 4 {
         graphics_context.color[i - 1] = f32(lua.L_optnumber(L, auto_cast i, lua.Number(graphics_context.color[i - 1])))
     }
@@ -274,3 +286,20 @@ draw: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     )
     return 0
 }
+
+get_dimensions: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    lua.pushinteger(L, auto_cast rl.GetScreenWidth())
+    lua.pushinteger(L, auto_cast rl.GetScreenHeight())
+    return 2
+}
+
+get_width: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    lua.pushinteger(L, auto_cast rl.GetScreenWidth())
+    return 1
+}
+
+get_height: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    lua.pushinteger(L, auto_cast rl.GetScreenHeight())
+    return 1
+}
+

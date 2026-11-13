@@ -37,7 +37,7 @@ function graphics.circle( mode, x, y, radius ) end
 ---@param x         number
 ---@param y         number
 ---@param width     number
----@param height    number
+---@param height    number? defaults to width
 ---@param roundness number?
 ---@param segments  integer?
 function graphics.rectangle( mode, x, y, width, height, roundness, segments ) end
@@ -52,7 +52,10 @@ function graphics.clear( r, g, b, a ) end
 ---@param g number?
 ---@param b number?
 ---@param a number?
-function graphics.setColor( r, g, b, a) end
+function graphics.setColor( r, g, b, a ) end
+
+---@param color Color
+function graphics.setColor( color ) end
 
 ---@return number r
 ---@return number g
@@ -110,5 +113,15 @@ function graphics.print( text, font, x, y, r, fontsize, spacing, ox, oy ) end
 ---@param ox        number?
 ---@param oy        number?
 function graphics.print( text, x, y, r, fontsize, spacing, ox, oy ) end
+
+---@return number width
+---@return number height
+function graphics.getDimensions() end
+
+---@return number
+function graphics.getWidth() end
+
+---@return number
+function graphics.getHeight() end
 
 return graphics
