@@ -20,6 +20,9 @@ function odinslove.draw()
     odinslove.graphics.setColor(0,0,1,1)
     odinslove.graphics.line(0, 0, 100, 100)
 
+    odinslove.graphics.setColor(1,1,1,1)
+    odinslove.graphics.print("Hello world", 5, 5)
+
     odinslove.graphics.setColor(1,0,0,1)
     odinslove.graphics.rectangle("line", 400, 300, 100, 100, 0.1, 12)
 

@@ -11,7 +11,8 @@
 ---@field g number
 ---@field b number
 ---@field a number
-Color = {}
+
+---@class Font
 
 ---@class (exact) Image
 ---@field private texture userdata
@@ -22,7 +23,6 @@ Color = {}
 ---@field setFilter fun(self: Image, filter: FilterMode)
 ---@field getWrap fun(self: Image) : WrapMode
 ---@field setWrap fun(self: Image, wrap: WrapMode)
-Image = {}
 
 ---@class graphics
 local graphics = {}
@@ -64,6 +64,10 @@ function graphics.getColor( ) end
 ---@return Image
 function graphics.newImage( filename ) end
 
+---@param filename string
+---@return Font
+function graphics.newFont( filename ) end
+
 ---@param drawable Drawable
 ---@param x        number
 ---@param y        number
@@ -85,5 +89,26 @@ function graphics.setLineWidth( width ) end
 ---@param x2 number
 ---@param y2 number
 function graphics.line( x1, y1, x2, y2 ) end
+
+---@param text      string
+---@param font      Font
+---@param x         number
+---@param y         number
+---@param r         number?
+---@param fontsize  number?
+---@param spacing   number?
+---@param ox        number?
+---@param oy        number?
+function graphics.print( text, font, x, y, r, fontsize, spacing, ox, oy ) end
+
+---@param text      string
+---@param x         number
+---@param y         number
+---@param r         number?
+---@param fontsize  number?
+---@param spacing   number?
+---@param ox        number?
+---@param oy        number?
+function graphics.print( text, x, y, r, fontsize, spacing, ox, oy ) end
 
 return graphics

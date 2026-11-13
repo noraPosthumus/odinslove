@@ -26,6 +26,8 @@ Graphics_Module_Library :: []lua.L_Reg {
     {"getLineWidth", get_line_width},
     {"setLineWidth", set_line_width},
     {"rectangle", rectangle},
+    {"print", print},
+    {"newFont", new_font},
     {nil, nil},
 }
 
@@ -158,6 +160,32 @@ line: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 }
 
 @(private)
+print: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    text := lua.L_checkstring(L, 1)
+
+    font := rl.GetFontDefault()
+    i_offset := i32(0)
+    if lua.isuserdata(L, 2) {
+        i_offset = 1
+        font = lutils.Lu_checkudataoftype(L, 2, rl.Font, MODNAME)^
+    }
+
+    x := f32(lua.L_checknumber(L, i_offset + 2))
+    y := f32(lua.L_checknumber(L, i_offset + 3))
+    r := f32(lua.L_optnumber(L, i_offset + 4, 0))
+    fontsize := f32(lua.L_optnumber(L, i_offset + 5, 16))
+    spacing := f32(lua.L_optnumber(L, i_offset + 6, 1))
+    ox := f32(lua.L_optnumber(L, i_offset + 7, 0))
+    oy := f32(lua.L_optnumber(L, i_offset + 8, 0))
+
+    graphics_context := get_graphics_context(L)
+
+    rl.DrawTextPro(font, text, {x, y,}, {ox, oy,}, r, fontsize, spacing, rl.ColorFromNormalized(graphics_context.color) )
+
+    return 0
+}
+
+@(private)
 set_line_width: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     width := lua.L_checknumber(L, 1)
     graphics_context := get_graphics_context(L)
@@ -195,7 +223,6 @@ set_color: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 new_image: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    context = runtime.default_context()
     filename := lua.L_checkstring(L, 1)
 
     texture := rl.LoadTexture(filename)
@@ -205,6 +232,21 @@ new_image: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     image.filter = .linear
 
     lua.L_setmetatable(L, "odinslove.graphics.Image")
+
+    return 1
+}
+
+
+@(private)
+new_font: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    filename := lua.L_checkstring(L, 1)
+
+    font := rl.LoadFont(filename)
+
+    font_userdata := cast(^Font)lua.newuserdata(L, size_of(Font))
+    font_userdata^ = font
+
+    lua.L_setmetatable(L, "odinslove.graphics.Font")
 
     return 1
 }
