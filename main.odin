@@ -3,19 +3,27 @@ package main
 import "core:log"
 import "core:fmt"
 import "core:os"
+import "core:flags"
 
 import ol "odinslove:core"
 
 import rl "vendor:raylib"
 
+Options :: struct {
+    game_directory: cstring `args:"pos=0,required" usage:"Path to the odinslove project to play"`,
+    fullscreen: bool,
+    target_fps: int,
+}
+
 USAGE_INFO :: """
 
-    usage: odinslove <DIRECTORY> [-h] [-v]
+    usage: odinslove <game-directory> [--fullscreen] [--target-fps <fps>] 
 
-    Play the odinslove project inside <DIRECTORY>.
+    Play the odinslove project located at <game-directory>.
 
-    -h, --help          Print this usage information
-    -v, --version       Print the version of odinslove
+    -h, --help              Print this usage information
+    --fullscreen            Start the game in fullscreen mode
+    --target-fps            Set the games target framerate (in frames per second)
 
     Note: An odinslove project consists of a main.lua file and any number of resources that are accessed from within main.lua.
 
@@ -32,30 +40,38 @@ USAGE_INFO :: """
 main :: proc() {
     context.logger = log.create_console_logger()
 
-    if len(os.args) < 2 || os.args[1] == "-h" || os.args[1] == "--help" {
-        fmt.print(USAGE_INFO)
-        os.exit(0)
-    }
+    options: Options
+	style : flags.Parsing_Style = .Unix
+    errors := flags.parse(&options, os.args[1:], style)
 
-    if os.args[1] == "-v" || os.args[1] == "--version" {
-        fmt.println("    Odinslove is still in very early development and doesn't have a version number yet :P")
-    }
-
-    directory := fmt.caprint(os.args[1])
-
-    if !rl.DirectoryExists(directory) {
-        fmt.printfln("    ERROR: '%s' is not a valid directory.", directory)
-        fmt.print(USAGE_INFO)
+    if errors != nil {
+        switch error in errors {
+        case flags.Parse_Error:
+            log.logf(.Fatal, "%v: %s", error.reason, error.message)
+        case flags.Open_File_Error:
+            log.logf(.Fatal, "Encountered an unexpected error while trying to parse command line arguments.")
+        case flags.Help_Request:
+            fmt.print(USAGE_INFO)
+        case flags.Validation_Error:
+            fmt.println("   ", error.message, "")
+            fmt.print(USAGE_INFO)
+        }
         os.exit(1)
     }
 
     rl.SetTraceLogLevel(.WARNING)
 
-    rl.ChangeDirectory(directory)
-    delete(directory)
+    rl.ChangeDirectory(options.game_directory)
 
     rl.InitWindow(800, 600, "Odinslove")
+
+    if options.fullscreen && !rl.IsWindowFullscreen() {
+        rl.ToggleFullscreen()
+    }
+
     rl.InitAudioDevice()
+
+    rl.SetTargetFPS(options.target_fps > 0 ? i32(options.target_fps) : 60)
 
     L := ol.init("main.lua")
 
