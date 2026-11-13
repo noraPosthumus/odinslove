@@ -17,6 +17,10 @@ function odinslove.draw()
     odinslove.graphics.setColor(0,1,0,1)
     odinslove.graphics.circle("fill", 100, 100, 50)
 
+    odinslove.graphics.setLineWidth(4)
+    odinslove.graphics.setColor(0,0,1,1)
+    odinslove.graphics.line(0, 0, 100, 100)
+
    odinslove.graphics.draw( image, 400, 400, 0, 20)
 end
 

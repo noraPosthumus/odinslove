@@ -11,6 +11,7 @@ MODNAME :: "odinslove.graphics"
 
 Graphics_Context :: struct {
     color: Color, // the currently active color, can be set from within lua by calling `odinslove.graphics.setColor()`
+    line_width: f32,
 }
 
 @(private)
@@ -21,6 +22,9 @@ Graphics_Module_Library :: []lua.L_Reg {
     {"setColor", set_color},
     {"newImage", new_image},
     {"draw", draw},
+    {"line", line},
+    {"getLineWidth", get_line_width},
+    {"setLineWidth", set_line_width},
     {nil, nil},
 }
 
@@ -41,7 +45,7 @@ get_graphics_context :: proc "c" (L: ^lua.State) -> ^Graphics_Context {
         graphics := cast(^Graphics_Context)(lua.newuserdatauv(L, size_of(Graphics_Context), 0))
 
         // {1, 1, 1, 1} => white
-        graphics^ = Graphics_Context{{1, 1, 1, 1}}
+        graphics^ = Graphics_Context{{1, 1, 1, 1}, 1}
         lua.setfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
         lua.getfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
     }
@@ -113,6 +117,35 @@ circle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     }
 
     return 0
+}
+
+@(private)
+line: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    x1 := i32(lua.L_checkinteger(L, 1))
+    y1 := i32(lua.L_checkinteger(L, 2))
+    x2 := i32(lua.L_checkinteger(L, 3))
+    y2 := i32(lua.L_checkinteger(L, 4))
+
+    graphics_context := get_graphics_context(L)
+
+    rl.DrawLineEx({auto_cast x1, auto_cast y1,}, {auto_cast x2, auto_cast y2,}, graphics_context.line_width, rl.ColorFromNormalized(graphics_context.color))
+
+    return 0
+}
+
+@(private)
+set_line_width: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    width := lua.L_checknumber(L, 1)
+    graphics_context := get_graphics_context(L)
+    graphics_context.line_width = auto_cast width
+    return 0
+}
+
+@(private)
+get_line_width: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    graphics_context := get_graphics_context(L)
+    lua.pushnumber(L, auto_cast graphics_context.line_width)
+    return 1
 }
 
 @(private)

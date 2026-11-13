@@ -65,4 +65,16 @@ function graphics.newImage( filename ) end
 ---@param oy       number?
 function graphics.draw( drawable, x, y, r, sx, sy, ox, oy ) end
 
+---@return number
+function graphics.getLineWidth() end
+
+---@param width number
+function graphics.setLineWidth( width ) end
+
+---@param x1 number
+---@param y1 number
+---@param x2 number
+---@param y2 number
+function graphics.line( x1, y1, x2, y2 ) end
+
 return graphics
