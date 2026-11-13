@@ -25,6 +25,7 @@ Graphics_Module_Library :: []lua.L_Reg {
     {"line", line},
     {"getLineWidth", get_line_width},
     {"setLineWidth", set_line_width},
+    {"rectangle", rectangle},
     {nil, nil},
 }
 
@@ -101,8 +102,8 @@ clear: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 circle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    x := i32(lua.L_checkinteger(L, 2))
-    y := i32(lua.L_checkinteger(L, 3))
+    x := f32(lua.L_checknumber(L, 2))
+    y := f32(lua.L_checknumber(L, 3))
     radius := f32(lua.L_checknumber(L, 4))
 
     mode := lutils.Lu_checkenum(L, 1, DrawMode)
@@ -111,9 +112,32 @@ circle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     switch mode {
     case .line:
-        rl.DrawCircleLines(x, y, radius, rl.ColorFromNormalized(graphics_context.color))
+        rl.DrawCircleLinesV({x, y,}, radius, rl.ColorFromNormalized(graphics_context.color))
     case .fill:
-        rl.DrawCircle(x, y, radius, rl.ColorFromNormalized(graphics_context.color))
+        rl.DrawCircleV({x, y,}, radius, rl.ColorFromNormalized(graphics_context.color))
+    }
+
+    return 0
+}
+
+@(private)
+rectangle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    x := f32(lua.L_checknumber(L, 2))
+    y := f32(lua.L_checknumber(L, 3))
+    width := f32(lua.L_checknumber(L, 4))
+    height := f32(lua.L_checknumber(L, 5))
+    roundness := f32(lua.L_optnumber(L, 6, 0))
+    segments := i32(lua.L_optinteger(L, 7, 1))
+
+    mode := lutils.Lu_checkenum(L, 1, DrawMode)
+
+    graphics_context := get_graphics_context(L)
+
+    switch mode {
+    case .line:
+        rl.DrawRectangleRoundedLinesEx({x, y, width, height,}, roundness, segments, graphics_context.line_width, rl.ColorFromNormalized(graphics_context.color))
+    case .fill:
+        rl.DrawRectangleRounded({x, y, width, height,}, roundness, segments, rl.ColorFromNormalized(graphics_context.color))
     }
 
     return 0
@@ -121,14 +145,14 @@ circle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 line: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    x1 := i32(lua.L_checkinteger(L, 1))
-    y1 := i32(lua.L_checkinteger(L, 2))
-    x2 := i32(lua.L_checkinteger(L, 3))
-    y2 := i32(lua.L_checkinteger(L, 4))
+    x1 := f32(lua.L_checknumber(L, 1))
+    y1 := f32(lua.L_checknumber(L, 2))
+    x2 := f32(lua.L_checknumber(L, 3))
+    y2 := f32(lua.L_checknumber(L, 4))
 
     graphics_context := get_graphics_context(L)
 
-    rl.DrawLineEx({auto_cast x1, auto_cast y1,}, {auto_cast x2, auto_cast y2,}, graphics_context.line_width, rl.ColorFromNormalized(graphics_context.color))
+    rl.DrawLineEx({x1, y1,}, {x2, y2,}, graphics_context.line_width, rl.ColorFromNormalized(graphics_context.color))
 
     return 0
 }

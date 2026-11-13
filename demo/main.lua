@@ -16,10 +16,12 @@ function odinslove.draw()
     odinslove.graphics.clear(0,0,0,1)
     odinslove.graphics.setColor(0,1,0,1)
     odinslove.graphics.circle("fill", 100, 100, 50)
-
     odinslove.graphics.setLineWidth(4)
     odinslove.graphics.setColor(0,0,1,1)
     odinslove.graphics.line(0, 0, 100, 100)
+
+    odinslove.graphics.setColor(1,0,0,1)
+    odinslove.graphics.rectangle("line", 400, 300, 100, 100, 0.1, 12)
 
    odinslove.graphics.draw( image, 400, 400, 0, 20)
 end

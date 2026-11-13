@@ -6,14 +6,14 @@
 ---@alias WrapMode "repeat" | "clamp" | "mirroredrepeat" | "mirroredclamp"
 ---@alias Drawable Image
 
----@class Color
+---@class (exact) Color
 ---@field r number
 ---@field g number
 ---@field b number
 ---@field a number
 Color = {}
 
----@class Image
+---@class (exact) Image
 ---@field private texture userdata
 ---@field getDimensions fun(self: Image): x: number, y: number
 ---@field getHeight fun(self: Image): number
@@ -32,6 +32,15 @@ local graphics = {}
 ---@param y      number
 ---@param radius number
 function graphics.circle( mode, x, y, radius ) end
+
+---@param mode      DrawMode
+---@param x         number
+---@param y         number
+---@param width     number
+---@param height    number
+---@param roundness number?
+---@param segments  integer?
+function graphics.rectangle( mode, x, y, width, height, roundness, segments ) end
 
 ---@param r number?
 ---@param g number?
