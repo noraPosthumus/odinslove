@@ -68,6 +68,9 @@ delete_source :: proc "c" (L: ^lua.State) -> c.int {
     lua.rawgeti(L, -1, auto_cast source.id)
     for refrence, i in audio_context.source_refrences {
         if refrence == source.id {
+            lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
+            lua.getiuservalue(L, -1, 1)
+            lua.L_unref(L, -1, auto_cast refrence)
             unordered_remove(audio_context.source_refrences, i)
         }
     }
@@ -159,7 +162,7 @@ source_seek :: proc "c" (L: ^lua.State) -> c.int {
         if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
         rl.SeekMusicStream(audio, f32(position))
     case rl.Sound:
-        lua.L_argerror(L, 1, "(Seeking is only allowed on sources of type \"stream\")")
+        lua.L_argerror(L, 1, "Seeking is only allowed on sources of type \"stream\"")
     }
     return 0
 }
