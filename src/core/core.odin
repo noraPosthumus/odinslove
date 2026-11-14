@@ -8,14 +8,14 @@ import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
 
 Libs :: enum{
-    base = 0,
+    standard = 0,
     graphics,
     audio,
 }
 
 // Initializes a new lua state, loads the specified libraries and runs the specified lua code. Also calls the "odinslove.load" callback inside lua.
 // Important: Call this after creating a raylib window.
-init :: proc(lua_source_files: ..cstring, libs: bit_set[Libs] = {.base, .graphics, .audio}, lua_source_code: cstring = "") -> ^lua.State {
+init :: proc(lua_source_files: ..cstring, libs: bit_set[Libs] = {.standard, .graphics, .audio}, lua_source_code: cstring = "") -> ^lua.State {
 
     if !rl.IsWindowReady() {
         rl.TraceLog(.FATAL, "Window not initialized. Make sure to call `rl.InitWindow()` before initializing odinslove.")
@@ -105,9 +105,9 @@ quit :: proc(L: ^lua.State) {
 init_lua :: proc(libs: bit_set[Libs]) -> ^lua.State {
     L := lua.L_newstate()
 
-    if .base in libs {
-        // open luas base libraries
-        lua.open_base(L)
+    if .standard in libs {
+        // open luas standard libraries
+        lua.L_openlibs(L)
     }
 
     // this table is going to be saved as global "odinslove"

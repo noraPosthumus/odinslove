@@ -61,6 +61,11 @@ main :: proc() {
 
     rl.SetTraceLogLevel(.WARNING)
 
+    if !rl.DirectoryExists(options.game_directory) {
+        fmt.printfln("Can't find game. '%s' isn't a valid directory.", options.game_directory)
+        os.exit(1)
+    }
+
     rl.ChangeDirectory(options.game_directory)
 
     rl.InitWindow(800, 600, "Odinslove")
