@@ -1,6 +1,6 @@
 package audio
 
-import "../../lutils"
+import "odinslove:lutils"
 import "base:runtime"
 import "core:c"
 import "core:os"

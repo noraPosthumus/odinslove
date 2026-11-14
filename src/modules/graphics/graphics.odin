@@ -1,7 +1,7 @@
 package graphics
 
 import "core:strings"
-import "../../lutils"
+import "odinslove:lutils"
 import "base:runtime"
 import "core:c"
 import "core:fmt"
