@@ -2,10 +2,12 @@
 
 ---@module "graphics"
 ---@module "audio"
+---@module "window"
 
 ---@class (exact) odinslove
 ---@field graphics graphics
 ---@field audio audio
+---@field window window
 ---@field draw fun()
 ---@field update fun(dt: number)
 ---@field load fun()
