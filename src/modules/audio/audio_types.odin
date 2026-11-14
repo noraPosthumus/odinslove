@@ -50,7 +50,7 @@ register_types :: proc "c" (L: ^lua.State) {
 @(private)
 delete_source :: proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
-    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    source := lutils.checkudataoftype(L, 1, Source, MODNAME)
 
     switch audio in source.audio {
     case rl.Music:
@@ -64,7 +64,7 @@ delete_source :: proc "c" (L: ^lua.State) -> c.int {
 
     if type != auto_cast lua.TTABLE do return {}
 
-    audio_context := get_audio_context(L)
+    audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
     lua.rawgeti(L, -1, auto_cast source.id)
     for refrence, i in audio_context.source_refrences {
         if refrence == source.id {
@@ -81,7 +81,7 @@ delete_source :: proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 source_get_volume :: proc "c" (L: ^lua.State) -> c.int {
-    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    source := lutils.checkudataoftype(L, 1, Source, MODNAME)
 
     lua.pushnumber(L, source.volume)
     return 1
@@ -89,7 +89,7 @@ source_get_volume :: proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 source_set_volume :: proc "c" (L: ^lua.State) -> c.int {
-    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    source := lutils.checkudataoftype(L, 1, Source, MODNAME)
 
     source.volume = lua.L_checknumber(L, 2)
     switch audio in source.audio {
@@ -105,7 +105,7 @@ source_set_volume :: proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 source_play :: proc "c" (L: ^lua.State) -> c.int {
-    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    source := lutils.checkudataoftype(L, 1, Source, MODNAME)
 
     switch audio in source.audio {
     case rl.Music:
@@ -122,7 +122,7 @@ source_play :: proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 source_pause :: proc "c" (L: ^lua.State) -> c.int {
-    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    source := lutils.checkudataoftype(L, 1, Source, MODNAME)
 
     switch audio in source.audio {
     case rl.Music:
@@ -137,7 +137,7 @@ source_pause :: proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 source_stop :: proc "c" (L: ^lua.State) -> c.int {
-    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    source := lutils.checkudataoftype(L, 1, Source, MODNAME)
 
     switch audio in source.audio {
     case rl.Music:
@@ -154,7 +154,7 @@ source_stop :: proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 source_seek :: proc "c" (L: ^lua.State) -> c.int {
-    source := lutils.Lu_checkudataoftype(L, 1, Source, MODNAME)
+    source := lutils.checkudataoftype(L, 1, Source, MODNAME)
     position := lua.L_checknumber(L, 2)
 
     switch audio in source.audio {

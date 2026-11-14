@@ -29,38 +29,10 @@ require_audio :: proc(L: ^lua.State) {
     lua.L_requiref(L, MODNAME, open_audio, 0)
 }
 
-// Get the current audio context. If no context exists, this creates a new one.
-get_audio_context :: proc "c" (L: ^lua.State) -> ^Audio_Context {
-    context = runtime.default_context()
-    type := lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
-
-    // if no audio context exists, create one
-    if type != auto_cast lua.TUSERDATA {
-        lua.pop(L, 1)
-        audio_context := cast(^Audio_Context)(lua.newuserdatauv(L, size_of(Audio_Context), 0)) // "odinslove.audio.audio_context"
-
-        // initialize the list of refrences to all sources
-        audio_context.source_refrences = new([dynamic]int)
-
-        lua.setfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
-        lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
-    }
-
-    audio_context := cast(^Audio_Context)lua.touserdata(L, -1)
-
-    lua.pop(L, 1)
-    if audio_context == nil {
-        lua.pushstring(L, "Failed to access audio context.")
-        lua.error(L)
-    }
-
-    return audio_context
-}
-
 // get a list of all Source objects that currently exist 
 get_all_sources :: proc "c" (L: ^lua.State) -> []^Source {
     context = runtime.default_context()
-    audio_context := get_audio_context(L)
+    audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
 
     sources := make([dynamic]^Source, context.temp_allocator)
 
@@ -96,6 +68,10 @@ open_audio : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     register_types(L)
 
+    // initialize the audio context
+    audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
+    audio_context.source_refrences = new([dynamic]int)
+
     lua.L_newlib(L, Audio_Module_Library)
     return 1
 }
@@ -108,13 +84,13 @@ new_source : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     n_args := lua.gettop(L)
 
-    audio_context := get_audio_context(L)
+    audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
 
     filename := lua.L_checkstring(L, 1)
 
     type: SourceType
     if n_args >= 2 {
-        type = lutils.Lu_checkenum(L, 2, SourceType)
+        type = lutils.checkenum(L, 2, SourceType)
     } else {
         type = .static
     }
@@ -169,7 +145,7 @@ play : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     n_args := lua.gettop(L)
     if n_args == 0 do return 0
     for i in 1 ..= n_args {
-        source := lutils.Lu_checkudataoftype(L, i, Source, MODNAME)
+        source := lutils.checkudataoftype(L, i, Source, MODNAME)
         switch audio in source.audio {
         case rl.Music:
             if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
@@ -192,7 +168,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     n_args := lua.gettop(L)
 
     if n_args == 0 {
-        audio_context := get_audio_context(L)
+        audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
         lua.newtable(L)
 
         i := 1
@@ -227,7 +203,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     }
 
     for i in 1 ..= n_args {
-        source := lutils.Lu_checkudataoftype(L, i, Source, MODNAME)
+        source := lutils.checkudataoftype(L, i, Source, MODNAME)
         switch audio in source.audio {
         case rl.Music:
             if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)

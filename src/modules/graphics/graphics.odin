@@ -41,35 +41,6 @@ require_graphics :: proc(L: ^lua.State) {
     lua.L_requiref(L, MODNAME, open_graphics, 0)
 }
 
-// Get the current graphics context. If no context exists, this creates a new one.
-get_graphics_context :: proc "c" (L: ^lua.State) -> ^Graphics_Context {
-    lua.getfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
-
-    // if no graphics context exists, create one
-    if !lua.isuserdata(L, -1) {
-        lua.pop(L, 1)
-
-        // the graphics context is full userdata
-        graphics := cast(^Graphics_Context)(lua.newuserdatauv(L, size_of(Graphics_Context), 0))
-
-        // {1, 1, 1, 1} => white
-        graphics^ = Graphics_Context{{1, 1, 1, 1}, 1}
-        lua.setfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
-        lua.getfield(L, lua.REGISTRYINDEX, "odinslove.graphics.graphics_context")
-    }
-
-    graphics_context := cast(^Graphics_Context)lua.touserdata(L, -1)
-
-    // pop the graphics context from the stack so the function is balanced (doesn't remove or add to the stack)
-    lua.pop(L, 1)
-    if graphics_context == nil {
-        lua.pushstring(L, "failed to access graphics context")
-        lua.error(L)
-    }
-
-    return graphics_context
-}
-
 @(private)
 open_graphics: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
@@ -89,6 +60,8 @@ open_graphics: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     }
 
     register_types(L)
+
+    lutils.getmodcontext(L, MODNAME, Graphics_Context, Graphics_Context{{1, 1, 1, 1}, 1})
 
     lua.L_newlib(L, Graphics_Module_Library)
     return 1
@@ -113,9 +86,9 @@ circle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     y := f32(lua.L_checknumber(L, 3))
     radius := f32(lua.L_checknumber(L, 4))
 
-    mode := lutils.Lu_checkenum(L, 1, DrawMode)
+    mode := lutils.checkenum(L, 1, DrawMode)
 
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
 
     switch mode {
     case .line:
@@ -136,9 +109,9 @@ rectangle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     roundness := f32(lua.L_optnumber(L, 6, 0))
     segments := i32(lua.L_optinteger(L, 7, 1))
 
-    mode := lutils.Lu_checkenum(L, 1, DrawMode)
+    mode := lutils.checkenum(L, 1, DrawMode)
 
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
 
     switch mode {
     case .line:
@@ -157,7 +130,7 @@ line: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     x2 := f32(lua.L_checknumber(L, 3))
     y2 := f32(lua.L_checknumber(L, 4))
 
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
 
     rl.DrawLineEx({x1, y1,}, {x2, y2,}, graphics_context.line_width, rl.ColorFromNormalized(graphics_context.color))
 
@@ -172,12 +145,12 @@ print: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     y := f32(lua.L_checknumber(L, 3))
     fontsize := f32(lua.L_optnumber(L, 4, 16))
     spacing := f32(lua.L_optnumber(L, 5, 1))
-    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.Lu_checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 6, rl.GetFontDefault())
+    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 6, rl.GetFontDefault())
     r := f32(lua.L_optnumber(L, 7, 0))
     ox := f32(lua.L_optnumber(L, 8, 0))
     oy := f32(lua.L_optnumber(L, 9, 0))
 
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
 
     rl.DrawTextPro(font, text, {x, y,}, {ox, oy,}, r, fontsize, spacing, rl.ColorFromNormalized(graphics_context.color) )
 
@@ -187,16 +160,16 @@ print: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 @(private)
 printf: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
 
     text := lua.L_checkstring(L, 1)
     x := f32(lua.L_checknumber(L, 2))
     y := f32(lua.L_checknumber(L, 3))
     limit := f32(lua.L_checknumber(L, 4))
-    align := lutils.Lu_checkenum(L, 5, AlignMode)
+    align := lutils.checkenum(L, 5, AlignMode)
     fontsize := f32(lua.L_optnumber(L, 6, 16))
     spacing := f32(lua.L_optnumber(L, 7, 1))
-    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.Lu_checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 8, rl.GetFontDefault())
+    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 8, rl.GetFontDefault())
     r := f32(lua.L_optnumber(L, 9, 0))
     ox := f32(lua.L_optnumber(L, 10, 0))
     oy := f32(lua.L_optnumber(L, 11, 0))
@@ -239,21 +212,21 @@ printf: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 @(private)
 set_line_width: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     width := lua.L_checknumber(L, 1)
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
     graphics_context.line_width = auto_cast width
     return 0
 }
 
 @(private)
 get_line_width: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
     lua.pushnumber(L, auto_cast graphics_context.line_width)
     return 1
 }
 
 @(private)
 get_color: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
 
     lua.pushnumber(L, lua.Number(graphics_context.color.r))
     lua.pushnumber(L, lua.Number(graphics_context.color.g))
@@ -264,7 +237,7 @@ get_color: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 set_color: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    graphics_context := get_graphics_context(L)
+    graphics_context := lutils.getmodcontext(L, MODNAME, Graphics_Context, nil)
 
     if lua.istable(L, 1) {
         for i in 1 ..= 4 {

@@ -6,7 +6,7 @@ import "core:reflect"
 import "core:strings"
 import lua "vendor:lua/5.4"
 
-Lu_checkenum :: proc "c" (L: ^lua.State, idx: i32, $Enum_Type: typeid) -> Enum_Type {
+checkenum :: proc "c" (L: ^lua.State, idx: i32, $Enum_Type: typeid) -> Enum_Type {
     context = runtime.default_context()
 
     options: [dynamic]cstring
@@ -23,7 +23,7 @@ Lu_checkenum :: proc "c" (L: ^lua.State, idx: i32, $Enum_Type: typeid) -> Enum_T
     return result
 }
 
-Lu_checkudataoftype :: proc "c" (L: ^lua.State, idx: i32, $T: typeid, modname: string) -> ^T {
+checkudataoftype :: proc "c" (L: ^lua.State, idx: i32, $T: typeid, modname: string) -> ^T {
     context = runtime.default_context()
 
     typeinfo, ok := type_info_of(T).variant.(reflect.Type_Info_Named)
@@ -43,4 +43,40 @@ Lu_checkudataoftype :: proc "c" (L: ^lua.State, idx: i32, $T: typeid, modname: s
     )
 
     return value
+}
+
+getmodcontext :: proc "c" (L: ^lua.State, modname: string, $T: typeid, def: Maybe(T)) -> ^T {
+    context = runtime.default_context()
+
+    typeinfo, ok := type_info_of(T).variant.(reflect.Type_Info_Named)
+    assert(ok, "Tried to pass an anonymous type to getcontext.")
+    name := fmt.caprint(modname, ".", typeinfo.name, sep = "", allocator = context.temp_allocator)
+
+    lua.getfield(L, lua.REGISTRYINDEX, name)
+
+    if !lua.isuserdata(L, -1) {
+        lua.pop(L, 1)
+
+        new_module_context := cast(^T)(lua.newuserdatauv(L, size_of(T), 0))
+
+        switch default_value in def {
+        case nil:
+            new_module_context^ = {}
+        case T:
+            new_module_context^ = default_value
+        }
+
+        lua.setfield(L, lua.REGISTRYINDEX, name)
+        lua.getfield(L, lua.REGISTRYINDEX, name)
+    }
+
+    module_context := cast(^T)lua.touserdata(L, -1)
+
+    lua.pop(L, 1)
+    if module_context == nil {
+        lua.pushstring(L, "failed to access context")
+        lua.error(L)
+    }
+
+    return module_context
 }
