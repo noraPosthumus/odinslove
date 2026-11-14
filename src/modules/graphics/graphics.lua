@@ -4,6 +4,7 @@
 
 ---@alias FilterMode "nearest" | "linear"
 ---@alias WrapMode "repeat" | "clamp" | "mirroredrepeat" | "mirroredclamp"
+---@alias AlignMode "center" | "left" | "right"
 ---@alias Drawable Image
 
 ---@class (exact) Color
@@ -94,25 +95,28 @@ function graphics.setLineWidth( width ) end
 function graphics.line( x1, y1, x2, y2 ) end
 
 ---@param text      string
----@param font      Font
 ---@param x         number
 ---@param y         number
 ---@param r         number?
 ---@param fontsize  number?
 ---@param spacing   number?
+---@param font      Font?
 ---@param ox        number?
 ---@param oy        number?
-function graphics.print( text, font, x, y, r, fontsize, spacing, ox, oy ) end
+function graphics.print( text, x, y, fontsize, spacing, font, r, ox, oy ) end
 
 ---@param text      string
 ---@param x         number
 ---@param y         number
----@param r         number?
+---@param limit     number
+---@param align     AlignMode
 ---@param fontsize  number?
 ---@param spacing   number?
+---@param font      Font?
+---@param r         number?
 ---@param ox        number?
 ---@param oy        number?
-function graphics.print( text, x, y, r, fontsize, spacing, ox, oy ) end
+function graphics.printf( text, x, y, limit, align, fontsize, spacing, font, r, ox, oy ) end
 
 ---@return number width
 ---@return number height

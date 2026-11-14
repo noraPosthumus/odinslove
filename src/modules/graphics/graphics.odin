@@ -1,5 +1,6 @@
 package graphics
 
+import "core:strings"
 import "../../lutils"
 import "base:runtime"
 import "core:c"
@@ -27,6 +28,7 @@ Graphics_Module_Library :: []lua.L_Reg {
     {"setLineWidth", set_line_width},
     {"rectangle", rectangle},
     {"print", print},
+    {"printf", printf},
     {"newFont", new_font},
     {"getDimensions", get_dimensions},
     {"getWidth", get_width},
@@ -166,24 +168,70 @@ line: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 print: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     text := lua.L_checkstring(L, 1)
 
-    font := rl.GetFontDefault()
-    i_offset := i32(0)
-    if lua.isuserdata(L, 2) {
-        i_offset = 1
-        font = lutils.Lu_checkudataoftype(L, 2, rl.Font, MODNAME)^
-    }
-
-    x := f32(lua.L_checknumber(L, i_offset + 2))
-    y := f32(lua.L_checknumber(L, i_offset + 3))
-    r := f32(lua.L_optnumber(L, i_offset + 4, 0))
-    fontsize := f32(lua.L_optnumber(L, i_offset + 5, 16))
-    spacing := f32(lua.L_optnumber(L, i_offset + 6, 1))
-    ox := f32(lua.L_optnumber(L, i_offset + 7, 0))
-    oy := f32(lua.L_optnumber(L, i_offset + 8, 0))
+    x := f32(lua.L_checknumber(L, 2))
+    y := f32(lua.L_checknumber(L, 3))
+    fontsize := f32(lua.L_optnumber(L, 4, 16))
+    spacing := f32(lua.L_optnumber(L, 5, 1))
+    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.Lu_checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 6, rl.GetFontDefault())
+    r := f32(lua.L_optnumber(L, 7, 0))
+    ox := f32(lua.L_optnumber(L, 8, 0))
+    oy := f32(lua.L_optnumber(L, 9, 0))
 
     graphics_context := get_graphics_context(L)
 
     rl.DrawTextPro(font, text, {x, y,}, {ox, oy,}, r, fontsize, spacing, rl.ColorFromNormalized(graphics_context.color) )
+
+    return 0
+}
+
+@(private)
+printf: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    context = runtime.default_context()
+    graphics_context := get_graphics_context(L)
+
+    text := lua.L_checkstring(L, 1)
+    x := f32(lua.L_checknumber(L, 2))
+    y := f32(lua.L_checknumber(L, 3))
+    limit := f32(lua.L_checknumber(L, 4))
+    align := lutils.Lu_checkenum(L, 5, AlignMode)
+    fontsize := f32(lua.L_optnumber(L, 6, 16))
+    spacing := f32(lua.L_optnumber(L, 7, 1))
+    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.Lu_checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 8, rl.GetFontDefault())
+    r := f32(lua.L_optnumber(L, 9, 0))
+    ox := f32(lua.L_optnumber(L, 10, 0))
+    oy := f32(lua.L_optnumber(L, 11, 0))
+    line_height := rl.MeasureTextEx(font, "X", fontsize, spacing).y + 2 * spacing
+
+    Line :: struct{width: f32, content: cstring}
+    lines := make([dynamic]Line, context.temp_allocator)
+    text_as_string := string(text)
+
+    for word in strings.split_after_iterator(&text_as_string, " ") {
+        word_as_cstring := strings.clone_to_cstring(word, context.temp_allocator)
+        word_width := rl.MeasureTextEx(font, word_as_cstring, fontsize, spacing).x
+
+        if len(lines) < 1 || lines[len(lines)-1].width + word_width >= limit {
+            append_elem(&lines, {word_width, word_as_cstring})
+            continue
+        }
+        current_line := &lines[len(lines)-1]
+        current_line.width += word_width
+        current_line.content = fmt.caprint(current_line.content, word_as_cstring, sep="", allocator=context.temp_allocator)
+    }
+
+    for line, i in lines {
+        line_x : f32
+        line_y := y + f32(i) * line_height
+        switch align {
+        case .left:
+            line_x = x
+        case .right:
+            line_x += limit - line.width
+        case .center:
+            line_x += (limit - line.width) / 2
+        }
+        rl.DrawTextPro(font, line.content, {line_x, line_y,}, {ox, oy,}, r, fontsize, spacing, rl.ColorFromNormalized(graphics_context.color))
+    }
 
     return 0
 }

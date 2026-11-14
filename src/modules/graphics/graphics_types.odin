@@ -27,6 +27,12 @@ WrapMode :: enum {
     mirroredclamp,
 }
 
+AlignMode :: enum {
+    left,
+    center,
+    right,
+}
+
 Image :: struct {
     texture : rl.Texture,
     filter :  FilterMode,
