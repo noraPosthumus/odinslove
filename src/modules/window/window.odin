@@ -142,8 +142,8 @@ set_position: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
 set_mode: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
-    width := lua.L_checknumber(L, 1)
-    height := i32(lua.L_checknumber(L, 2))
+    width := i32(lua.L_checkinteger(L, 1))
+    height := i32(lua.L_checkinteger(L, 2))
 
     flagsvalid := true
 
@@ -208,6 +208,8 @@ set_mode: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     rl.SetWindowMonitor(auto_cast display)
 
     rl.SetWindowPosition(auto_cast x, auto_cast y)
+
+    rl.SetWindowSize(width, height)
 
     return 0
 }
