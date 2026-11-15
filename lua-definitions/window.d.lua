@@ -1,6 +1,6 @@
 ---@meta window
 
----@class (exact) Flags
+---@class (exact) WindowFlags
 ---@field fullscreen boolean # whether the window is fullscreen
 ---@field vsync boolean # whether vsync is enabled
 ---@field resizable boolean # whether the window is resizable
@@ -22,7 +22,7 @@ function window.getFullscreen() end
 ---Gets information about the window.
 ---@return number width # window width
 ---@return number height # window height
----@return Flags flags # window [flags](lua://Flags)
+---@return WindowFlags flags # window [flags](lua://WindowFlags)
 function window.getMode() end
 
 ---Gets the position of the window on the display.
@@ -31,20 +31,28 @@ function window.getMode() end
 ---@return integer display # index of the display the window is on
 function window.getPosition() end
 
+---Gets the current window title. (Currently this only works if the title was set through callign setTitle)
 function window.getTitle() end
 
+---Gets whether the window has Focus.
 function window.hasFocus() end
 
+---Maximizes the window
 function window.maximize() end
 
+---Minimizes the window
 function window.minimize() end
 
+---Restores the window to its original size (before maxi- or minimizing)
 function window.restore() end
 
+---Sets the window title.
 function window.setTitle( title ) end
 
+---Sets the windows position on the display.
 function window.setPosition( x, y ) end
 
+---Sets the windows width, height and [flags](lua://WindowFlags).
 function window.setMode( width, height, flags ) end
 
 return window

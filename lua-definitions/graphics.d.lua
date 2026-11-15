@@ -1,0 +1,161 @@
+---@meta graphics
+
+---@alias DrawMode "fill" | "line"
+
+---@alias FilterMode "nearest" | "linear"
+---@alias WrapMode "repeat" | "clamp" | "mirroredrepeat" | "mirroredclamp"
+---@alias AlignMode "center" | "left" | "right"
+---@alias Drawable Image
+
+---@class (exact) Color
+---@field r number
+---@field g number
+---@field b number
+---@field a number
+
+---@class Font
+
+---@class Image
+Image = {}
+
+---@return number width
+---@return number height
+---Gets the dimension of the image in pixels.
+function Image:getDimensions() end
+
+---@return number
+---Gets the height of the image in pixels.
+function Image:getHeight() end
+
+---@return number
+---Gets the width of the image in pixels.
+function Image:getWidth() end
+
+---@return FilterMode
+---Gets the [filter mode](lua://FilterMode) of the image.
+function Image:getFilter() end
+
+---@param filter FilterMode
+---Sets the [filter mode](lua://FilterMode) of the image.
+function Image:setFilter( filter ) end
+
+---@return WrapMode
+---Gets the [wrap mode](lua://WrapMode) of the image.
+function Image:getWrap() end
+
+---@param wrap WrapMode
+---Sets the [wrap mode](lua://WrapMode) of the image.
+function Image:setWrap( wrap ) end
+
+---@class graphics
+local graphics = {}
+
+---@param mode   DrawMode
+---@param x      number
+---@param y      number
+---@param radius number
+---Draws a circle.
+function graphics.circle( mode, x, y, radius ) end
+
+---@param mode       DrawMode
+---@param x          number
+---@param y          number
+---@param width      number
+---@param height?    number # defaults to width
+---@param roundness? number
+---@param segments?  integer
+---Draws a rectangle.
+function graphics.rectangle( mode, x, y, width, height, roundness, segments ) end
+
+---@param r? number # defaults to 1
+---@param g? number # defaults to 1
+---@param b? number # defaults to 1
+---@param a? number # defaults to 1
+---Clears the screen ot the specified color. Uses white if no color is provided.
+---It's good practice to call this every frame before drawing anything else.
+function graphics.clear( r, g, b, a ) end
+
+---@param r? number
+---@param g? number
+---@param b? number
+---@param a? number
+---Sets the current color. The current color is the color used when drawing shapes or text.
+function graphics.setColor( r, g, b, a ) end
+
+---@param color Color
+function graphics.setColor( color ) end
+
+---@return number r
+---@return number g
+---@return number b
+---@return number a
+---Gets the current color.
+function graphics.getColor( ) end
+
+---@param filename string
+---@return Image
+---Loads the image with the provided filename.
+function graphics.newImage( filename ) end
+
+---@param filename string
+---@return Font
+---Loads the font with the provided filename. (Supports TTF, OTF, FNT and BDF)
+function graphics.newFont( filename ) end
+
+---@param drawable Drawable
+---@param x        number
+---@param y        number
+---@param r?       number
+---@param sx?      number
+---@param sy?      number
+---@param ox?      number
+---@param oy?      number
+function graphics.draw( drawable, x, y, r, sx, sy, ox, oy ) end
+
+---@return number
+function graphics.getLineWidth() end
+
+---@param width number
+function graphics.setLineWidth( width ) end
+
+---@param x1 number
+---@param y1 number
+---@param x2 number
+---@param y2 number
+function graphics.line( x1, y1, x2, y2 ) end
+
+---@param text      string
+---@param x         number
+---@param y         number
+---@param r?        number
+---@param fontsize? number
+---@param spacing?  number
+---@param font?     Font
+---@param ox?       number
+---@param oy?       number
+function graphics.print( text, x, y, fontsize, spacing, font, r, ox, oy ) end
+
+---@param text      string
+---@param x         number
+---@param y         number
+---@param limit     number
+---@param align     AlignMode
+---@param fontsize? number
+---@param spacing?  number
+---@param font?     Font
+---@param r?        number
+---@param ox?       number
+---@param oy?       number
+function graphics.printf( text, x, y, limit, align, fontsize, spacing, font, r, ox, oy ) end
+
+---@return number width
+---@return number height
+function graphics.getDimensions() end
+
+---@return number
+function graphics.getWidth() end
+
+---@return number
+function graphics.getHeight() end
+
+return graphics
