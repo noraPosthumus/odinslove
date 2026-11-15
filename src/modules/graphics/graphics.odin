@@ -92,7 +92,7 @@ circle: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     switch mode {
     case .line:
-        rl.DrawCircleLinesV({x, y,}, radius, rl.ColorFromNormalized(graphics_context.color))
+        rl.DrawRing({x,y}, radius - graphics_context.line_width, radius, 0, 360, 45, rl.ColorFromNormalized(graphics_context.color))
     case .fill:
         rl.DrawCircleV({x, y,}, radius, rl.ColorFromNormalized(graphics_context.color))
     }
@@ -286,9 +286,7 @@ new_font: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
 @(private)
 draw: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    image := cast(^Image)lua.L_checkudata(L, 1, "odinslove.graphics.Image")
-    lua.L_argcheck(L, image == nil, 1, "missing image object")
-
+    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
     x := f32(lua.L_optnumber(L, 2, 0))
     y := f32(lua.L_optnumber(L, 3, 0))
     r := f32(lua.L_optnumber(L, 4, 0))
