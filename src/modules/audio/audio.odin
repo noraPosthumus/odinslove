@@ -95,18 +95,12 @@ new_source : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
         type = .static
     }
 
-    lua.newtable(L)
-    lua.newtable(L)
-    lua.pushliteral(L, "v")
-    lua.setfield(L, -2, "__mode")
-    lua.setmetatable(L, -2)
     source := cast(^Source)lua.newuserdata(L, size_of(Source))
     lua.L_setmetatable(L, "odinslove.audio.Source")
-    lua.seti(L, -2, 1)
-    refrence := lua.L_ref(L, lua.REGISTRYINDEX)
+    refrence := lutils.weakref(L, lua.REGISTRYINDEX)
 
-    lua.rawgeti(L, lua.REGISTRYINDEX, auto_cast refrence)
-    lua.geti(L, -1, 1)
+    // push the newly created source on top of the stack so it can be returned
+    lutils.getweakref(L, lua.REGISTRYINDEX, refrence)
 
     source.paused = false // music isn't paused, even if it isn't playing
     source.volume = 1
@@ -119,7 +113,6 @@ new_source : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     append_elem(audio_context.source_refrences, auto_cast refrence)
 
-    
     return 1
 }
 
@@ -167,6 +160,7 @@ play : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     n_args := lua.gettop(L)
 
+    // if the function has zero arguments the user wants to pause all active audio sources
     if n_args == 0 {
         audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
         lua.newtable(L)
@@ -175,8 +169,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
         for source_ref in audio_context.source_refrences {
             top := lua.gettop(L)
             defer lua.settop(L, top)
-            lua.rawgeti(L, lua.REGISTRYINDEX, auto_cast source_ref)
-            type := lua.geti(L, -1, 1)
+            type := lutils.getweakref(L, lua.REGISTRYINDEX, auto_cast source_ref)
             if type != auto_cast lua.TUSERDATA do continue
             source := cast(^Source)lua.touserdata(L, -1)
             switch audio in source.audio {
@@ -185,7 +178,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
                 if rl.IsMusicStreamPlaying(audio) {
                     rl.PauseMusicStream(audio)
                     source.paused = true
-                    lua.rawseti(L, -3, auto_cast i)
+                    lua.rawseti(L, -2, auto_cast i)
                     i += 1
                 }
             case rl.Sound:
@@ -193,7 +186,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
                 if rl.IsSoundPlaying(audio) {
                     rl.PauseSound(audio)
                     source.paused = true
-                    lua.rawseti(L, -3, auto_cast i)
+                    lua.rawseti(L, -2, auto_cast i)
                     i += 1
                 }
             }
@@ -202,6 +195,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
         return 1
     }
 
+    // pause each audio provided in args
     for i in 1 ..= n_args {
         source := lutils.checkudataoftype(L, i, Source, MODNAME)
         switch audio in source.audio {
