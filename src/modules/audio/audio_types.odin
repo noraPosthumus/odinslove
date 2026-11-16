@@ -59,22 +59,18 @@ delete_source :: proc "c" (L: ^lua.State) -> c.int {
         if rl.IsSoundValid(audio) do rl.UnloadSound(audio)
     }
 
-    lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
-    type := lua.getiuservalue(L, -1, 1)
-
-    if type != auto_cast lua.TTABLE do return {}
-
     audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
-    lua.rawgeti(L, -1, auto_cast source.id)
+
+    // delete the source from the list of all sources
     for refrence, i in audio_context.source_refrences {
         if refrence == source.id {
-            lua.getfield(L, lua.REGISTRYINDEX, "odinslove.audio.audio_context")
-            lua.getiuservalue(L, -1, 1)
-            lua.L_unref(L, -1, auto_cast refrence)
             unordered_remove(audio_context.source_refrences, i)
         }
     }
     shrink(audio_context.source_refrences)
+
+    // free the refrence
+    lutils.weakunref(L, lua.REGISTRYINDEX, auto_cast source.id)
 
     return 0
 }
