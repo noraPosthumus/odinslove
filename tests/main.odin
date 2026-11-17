@@ -1,6 +1,6 @@
 package tests
 
-import "core:log"
+import "core:c"
 import "core:image"
 import "core:image/png"
 import "core:testing"
@@ -10,14 +10,14 @@ import "odinslove:modules/graphics"
 import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
 
-prepare :: proc() -> ^lua.State {
+prepare :: proc(script: cstring="") -> ^lua.State {
     rl.SetTraceLogLevel(.NONE)
 
     rl.InitWindow(100, 100, "Tests")
     rl.SetTargetFPS(120)
     rl.ChangeDirectory(#directory)
 
-    L := ol.init()
+    L := ol.init(lua_source_code=script)
     lua.open_debug(L)
 
     return L
@@ -131,6 +131,66 @@ library_registration :: proc(t: ^testing.T) {
     )
     lua.pop(L, 1)
 
+}
+
+@(test)
+callbacks :: proc(t: ^testing.T) {
+
+    L := prepare("""
+function odinslove.load()
+    load_called = true
+end
+
+function odinslove.update(dt)
+    delta_time = dt
+end
+
+function odinslove.draw()
+    draw_called = true
+end
+
+function odinslove.quit()
+    setQuitCalledToTrue()
+end
+""")
+    defer rl.CloseWindow()
+
+    lua.getglobal(L, "load_called")
+    load_called := lua.toboolean(L, -1)
+    testing.expect(t, auto_cast load_called, "Load callback wasn't called on init.")
+
+    mock_dt := f32(1.0/60)
+    ol.update(L, mock_dt)
+
+    delta_time_type := lua.getglobal(L, "delta_time")
+    delta_time := lua.tonumber(L, -1)
+    testing.expect(t, lua.Type(delta_time_type) == lua.Type.NUMBER, "Update callback wasn't called.")
+
+
+    testing.expect(t, mock_dt == auto_cast delta_time, "Incorrect deltatime supplied to update callback.")
+
+    rl.BeginDrawing()
+    ol.draw(L)
+    rl.EndDrawing()
+
+    lua.getglobal(L, "draw_called")
+    draw_called := lua.toboolean(L, -1)
+    testing.expect(t, auto_cast draw_called, "Draw callback wasn't called.")
+
+    quit_called := false
+    lua.pushlightuserdata(L, &quit_called)
+    lua.setglobal(L, "quit_called")
+
+    lua.pushcfunction(L, proc "c" (L: ^lua.State) -> c.int {
+        lua.getglobal(L, "quit_called")
+        quit_called_ptr := cast(^bool)lua.touserdata(L, -1)
+        quit_called_ptr^ = true
+        return 0
+    })
+    lua.setglobal(L, "setQuitCalledToTrue")
+
+    ol.quit(L)
+    testing.expect(t, auto_cast quit_called, "Quit callback wasn't called.")
 }
 
 @(test)
