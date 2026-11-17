@@ -1,2 +1,4 @@
 odinslove
 odinslove.debug
+*.bin
+generated__*.*
