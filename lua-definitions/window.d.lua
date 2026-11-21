@@ -31,9 +31,6 @@ function window.getMode() end
 ---@return integer display # index of the display the window is on
 function window.getPosition() end
 
----Gets the current window title. (Currently this only works if the title was set through callign setTitle)
-function window.getTitle() end
-
 ---Gets whether the window has Focus.
 function window.hasFocus() end
 

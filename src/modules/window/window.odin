@@ -8,16 +8,11 @@ import rl "vendor:raylib"
 
 MODNAME :: "odinslove.window"
 
-Window_Context :: struct{
-    window_title : cstring,
-}
-
 @(private)
 Window_Module_Library :: []lua.L_Reg {
     {"getFullscreen", get_fullscreen},
     {"getMode", get_mode},
     {"getPosition", get_position},
-    {"getTitle", get_title},
     {"hasFocus", has_focus},
     {"maximize", maximize},
     {"minimize", minimize},
@@ -45,8 +40,6 @@ open_window: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
         )
         lua.error(L)
     }
-
-    lutils.getmodcontext(L, MODNAME, Window_Context, {"unknown"})
 
     lua.L_newlib(L, Window_Module_Library)
     return 1
@@ -93,14 +86,6 @@ get_position: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     return 2
 }
 
-get_title: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-
-    window_context := lutils.getmodcontext(L, MODNAME, Window_Context, nil)
-    lua.pushstring(L, window_context.window_title)
-
-    return 1
-}
-
 has_focus: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     lua.pushboolean(L, auto_cast rl.IsWindowFocused())
     return 1
@@ -124,8 +109,6 @@ restore: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 set_title: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     title := lua.L_checkstring(L, 1)
 
-    window_context := lutils.getmodcontext(L, MODNAME, Window_Context, nil)
-    window_context.window_title = title
     rl.SetWindowTitle(title)
 
     return 0
