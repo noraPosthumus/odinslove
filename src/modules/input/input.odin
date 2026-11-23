@@ -8,6 +8,11 @@ import rl "vendor:raylib"
 
 MODNAME :: "odinslove.input"
 
+// requires the input module and pushes it onto the stack.
+require_input :: proc(L: ^lua.State) {
+    lua.L_requiref(L, MODNAME, open_input, 0)
+}
+
 @(private)
 Input_Module_Library :: []lua.L_Reg {
     {"isKeyPressed", is_key_pressed},
@@ -16,11 +21,6 @@ Input_Module_Library :: []lua.L_Reg {
     {"isKeyUp", is_key_up},
     {"isKeyPressedRepeat", is_key_pressed_repeat},
     {nil, nil},
-}
-
-// requires the input module and pushes it onto the stack.
-require_input :: proc(L: ^lua.State) {
-    lua.L_requiref(L, MODNAME, open_input, 0)
 }
 
 @(private)

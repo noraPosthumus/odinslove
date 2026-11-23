@@ -4,7 +4,6 @@ import "odinslove:lutils"
 import "base:runtime"
 import "core:c"
 import "core:os"
-import "core:fmt"
 import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
 
@@ -12,16 +11,6 @@ MODNAME :: "odinslove.audio"
 
 Audio_Context :: struct {
     source_refrences: ^[dynamic]int,
-}
-
-@(private)
-Audio_Module_Library :: []lua.L_Reg {
-    {"getVolume", get_volume},
-    {"setVolume", set_volume},
-    {"newSource", new_source},
-    {"play", play},
-    {"pause", pause},
-    {nil, nil},
 }
 
 // requires the audio module and pushes it onto the stack.
@@ -46,6 +35,16 @@ get_all_sources :: proc "c" (L: ^lua.State) -> []^Source {
     }
 
     return sources[:]
+}
+
+@(private)
+Audio_Module_Library :: []lua.L_Reg {
+    {"getVolume", get_volume},
+    {"setVolume", set_volume},
+    {"newSource", new_source},
+    {"play", play},
+    {"pause", pause},
+    {nil, nil},
 }
 
 @(private)

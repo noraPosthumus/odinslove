@@ -15,6 +15,18 @@ Graphics_Context :: struct {
     line_width: f32,
 }
 
+DrawMode :: enum {
+    fill,
+    line,
+}
+
+Color :: rl.Vector4
+
+// requires the graphics module and pushes it onto the stack.
+require_graphics :: proc(L: ^lua.State) {
+    lua.L_requiref(L, MODNAME, open_graphics, 0)
+}
+
 @(private)
 Graphics_Module_Library :: []lua.L_Reg {
     {"clear", clear},
@@ -34,18 +46,6 @@ Graphics_Module_Library :: []lua.L_Reg {
     {"getWidth", get_width},
     {"getHeight", get_height},
     {nil, nil},
-}
-
-DrawMode :: enum {
-    fill,
-    line,
-}
-
-Color :: rl.Vector4
-
-// requires the graphics module and pushes it onto the stack.
-require_graphics :: proc(L: ^lua.State) {
-    lua.L_requiref(L, MODNAME, open_graphics, 0)
 }
 
 @(private)
