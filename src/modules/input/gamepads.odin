@@ -21,6 +21,9 @@ Gamepad_Methods :: []lua.L_Reg {
     {"getAxis", gamepad_get_axis},
     {"getAxes", gamepad_get_axes},
     {"isDown", gamepad_is_down},
+    {"isUp", gamepad_is_up},
+    {"isPressed", gamepad_is_pressed},
+    {"isReleased", gamepad_is_released},
     {nil, nil},
 }
 
@@ -98,6 +101,39 @@ gamepad_is_down: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     result := false
     for i in 2..=lua.gettop(L) {
         result ||= rl.IsGamepadButtonDown(gamepad.id, lutils.checkenum(L, i, rl.GamepadButton))
+    }
+    lua.pushboolean(L, auto_cast result)
+    return 1
+}
+
+@(private)
+gamepad_is_up: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    gamepad := lutils.checkuserdataoftype(L, 1, TNAME_GAMEPAD, Gamepad)
+    result := false
+    for i in 2..=lua.gettop(L) {
+        result ||= rl.IsGamepadButtonUp(gamepad.id, lutils.checkenum(L, i, rl.GamepadButton))
+    }
+    lua.pushboolean(L, auto_cast result)
+    return 1
+}
+
+@(private)
+gamepad_is_pressed: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    gamepad := lutils.checkuserdataoftype(L, 1, TNAME_GAMEPAD, Gamepad)
+    result := false
+    for i in 2..=lua.gettop(L) {
+        result ||= rl.IsGamepadButtonPressed(gamepad.id, lutils.checkenum(L, i, rl.GamepadButton))
+    }
+    lua.pushboolean(L, auto_cast result)
+    return 1
+}
+
+@(private)
+gamepad_is_released: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    gamepad := lutils.checkuserdataoftype(L, 1, TNAME_GAMEPAD, Gamepad)
+    result := false
+    for i in 2..=lua.gettop(L) {
+        result ||= rl.IsGamepadButtonReleased(gamepad.id, lutils.checkenum(L, i, rl.GamepadButton))
     }
     lua.pushboolean(L, auto_cast result)
     return 1
