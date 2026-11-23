@@ -52,20 +52,6 @@ get_all_sources :: proc "c" (L: ^lua.State) -> []^Source {
 open_audio : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
 
-    modname := lua.L_checkstring(L, 1)
-
-    if modname != MODNAME {
-        lua.pushstring(
-            L,
-            fmt.caprintf(
-                "Tried to require audio module with wrong module name ('%s' instead of '%s'",
-                modname,
-                MODNAME,
-            ),
-        )
-        lua.error(L)
-    }
-
     lutils.registeruserdatatype(L, TNAME_SOURCE, Source_Methods)
 
     // initialize the audio context
@@ -98,7 +84,7 @@ play : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     n_args := lua.gettop(L)
     if n_args == 0 do return 0
     for i in 1 ..= n_args {
-        source := lutils.checkuserdataoftype(L, 1, TNAME_SOURCE, Source)
+        source := lutils.checkuserdataoftype(L, i, TNAME_SOURCE, Source)
         switch audio in source.audio {
         case rl.Music:
             if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
@@ -157,7 +143,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     // pause each audio provided in args
     for i in 1 ..= n_args {
-        source := lutils.checkuserdataoftype(L, 1, TNAME_SOURCE, Source)
+        source := lutils.checkuserdataoftype(L, i, TNAME_SOURCE, Source)
         switch audio in source.audio {
         case rl.Music:
             if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)

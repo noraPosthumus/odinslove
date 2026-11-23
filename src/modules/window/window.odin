@@ -1,6 +1,5 @@
 package window
 
-import "odinslove:lutils"
 import "base:runtime"
 import "core:c"
 import lua "vendor:lua/5.4"
@@ -31,15 +30,6 @@ require_window :: proc(L: ^lua.State) {
 @(private)
 open_window: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
-
-    modname := lua.L_checkstring(L, 1)
-
-    if modname != MODNAME {
-        lua.pushstring(
-            L, "Tried to require window module with the wrong module name",
-        )
-        lua.error(L)
-    }
 
     lua.L_newlib(L, Window_Module_Library)
     return 1
