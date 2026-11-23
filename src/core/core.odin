@@ -1,5 +1,6 @@
 package core
 
+import "odinslove:modules/input"
 import "core:os"
 import "odinslove:modules/audio"
 import "odinslove:modules/graphics"
@@ -13,6 +14,7 @@ Libs :: enum{
     graphics,
     audio,
     window,
+    input,
 }
 
 // Initializes a new lua state, loads the specified libraries and runs the specified lua code. Also calls the "odinslove.load" callback inside lua.
@@ -129,6 +131,11 @@ init_lua :: proc(libs: bit_set[Libs]) -> ^lua.State {
     if .window in libs {
         window.require_window(L)
         lua.setfield(L, -2, "window")
+    }
+
+    if .input in libs {
+        input.require_input(L)
+        lua.setfield(L, -2, "input")
     }
 
     lua.setglobal(L, "odinslove")
