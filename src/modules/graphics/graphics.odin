@@ -36,6 +36,13 @@ Graphics_Module_Library :: []lua.L_Reg {
     {nil, nil},
 }
 
+DrawMode :: enum {
+    fill,
+    line,
+}
+
+Color :: rl.Vector4
+
 // requires the graphics module and pushes it onto the stack.
 require_graphics :: proc(L: ^lua.State) {
     lua.L_requiref(L, MODNAME, open_graphics, 0)
@@ -45,21 +52,8 @@ require_graphics :: proc(L: ^lua.State) {
 open_graphics: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     context = runtime.default_context()
 
-    modname := lua.L_checkstring(L, 1)
-
-    if modname != MODNAME {
-        lua.pushstring(
-            L,
-            fmt.caprintf(
-                "Tried to require graphics module with wrong module name ('%s' instead of '%s'",
-                modname,
-                MODNAME,
-            ),
-        )
-        lua.error(L)
-    }
-
-    register_types(L)
+    lutils.registeruserdatatype(L, TNAME_IMAGE, Image_Methods)
+    lutils.registeruserdatatype(L, TNAME_FONT, Font_Methods)
 
     lutils.getmodcontext(L, MODNAME, Graphics_Context, Graphics_Context{{1, 1, 1, 1}, 1})
 
@@ -145,7 +139,10 @@ print: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     y := f32(lua.L_checknumber(L, 3))
     fontsize := f32(lua.L_optnumber(L, 4, 16))
     spacing := f32(lua.L_optnumber(L, 5, 1))
-    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 6, rl.GetFontDefault())
+    font := lua.L_opt(L, 
+        proc "c" (L: ^lua.State, arg: c.int) -> rl.Font {
+            return lutils.checkuserdataoftype(L, arg, MODNAME + ".Font", rl.Font)^
+        }, 6, rl.GetFontDefault())
     r := f32(lua.L_optnumber(L, 7, 0))
     ox := f32(lua.L_optnumber(L, 8, 0))
     oy := f32(lua.L_optnumber(L, 9, 0))
@@ -169,7 +166,10 @@ printf: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     align := lutils.checkenum(L, 5, AlignMode)
     fontsize := f32(lua.L_optnumber(L, 6, 16))
     spacing := f32(lua.L_optnumber(L, 7, 1))
-    font := lua.L_opt(L, proc "c" (L: ^lua.State, arg: c.int) -> rl.Font { return lutils.checkudataoftype(L, arg, rl.Font, MODNAME)^ }, 8, rl.GetFontDefault())
+    font := lua.L_opt(L, 
+        proc "c" (L: ^lua.State, arg: c.int) -> rl.Font {
+            return lutils.checkuserdataoftype(L, arg, MODNAME + ".Font", rl.Font,)^
+        }, 8, rl.GetFontDefault())
     r := f32(lua.L_optnumber(L, 9, 0))
     ox := f32(lua.L_optnumber(L, 10, 0))
     oy := f32(lua.L_optnumber(L, 11, 0))
@@ -255,38 +255,8 @@ set_color: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 }
 
 @(private)
-new_image: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    filename := lua.L_checkstring(L, 1)
-
-    texture := rl.LoadTexture(filename)
-
-    image := cast(^Image)lua.newuserdata(L, size_of(Image))
-    image.texture = texture
-    image.filter = .linear
-
-    lua.L_setmetatable(L, "odinslove.graphics.Image")
-
-    return 1
-}
-
-
-@(private)
-new_font: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    filename := lua.L_checkstring(L, 1)
-
-    font := rl.LoadFont(filename)
-
-    font_userdata := cast(^Font)lua.newuserdata(L, size_of(Font))
-    font_userdata^ = font
-
-    lua.L_setmetatable(L, "odinslove.graphics.Font")
-
-    return 1
-}
-
-@(private)
 draw: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
     x := f32(lua.L_optnumber(L, 2, 0))
     y := f32(lua.L_optnumber(L, 3, 0))
     r := f32(lua.L_optnumber(L, 4, 0))

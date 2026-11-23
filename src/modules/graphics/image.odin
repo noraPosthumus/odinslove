@@ -8,12 +8,7 @@ import "odinslove:lutils"
 import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
 
-DrawMode :: enum {
-    fill,
-    line,
-}
-
-Color :: rl.Vector4
+TNAME_IMAGE :: MODNAME + ".Image"
 
 FilterMode :: enum {
     nearest,
@@ -52,38 +47,22 @@ Image_Methods :: []lua.L_Reg {
     {nil, nil},
 }
 
-Font :: rl.Font
+@(private)
+new_image: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    filename := lua.L_checkstring(L, 1)
 
-Font_Methods :: []lua.L_Reg {
-    {"__gc", delete_font},
-    {nil,nil},
-}
+    texture := rl.LoadTexture(filename)
 
-// Register all types defined by the graphics module
-register_types :: proc "c" (L : ^lua.State) {
+    image := lutils.newuserdataoftype(L, TNAME_IMAGE, Image)
+    image.texture = texture
+    image.filter = .linear
 
-    // Image
-    lua.L_newmetatable(L, "odinslove.graphics.Image")
-    lua.pushvalue(L, -1)
-    lua.setfield(L, -2, "__index")
-
-    lua.L_setfuncs(L, raw_data(Image_Methods), 0)
-
-    lua.pop(L, 1)
-
-    // Font
-    lua.L_newmetatable(L, "odinslove.graphics.Font")
-    lua.pushvalue(L, -1)
-    lua.setfield(L, -2, "__index")
-
-    lua.L_setfuncs(L, raw_data(Font_Methods), 0)
-
-    lua.pop(L, 1)
+    return 1
 }
 
 @(private)
 image_get_dimensions : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     lua.pushnumber(L, lua.Number(image.texture.width))
     lua.pushnumber(L, lua.Number(image.texture.height))
@@ -93,7 +72,7 @@ image_get_dimensions : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
 
 @(private)
 image_get_width : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     lua.pushnumber(L, lua.Number(image.texture.width))
     return 1
@@ -101,7 +80,7 @@ image_get_width : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
 
 @(private)
 image_get_height : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     lua.pushnumber(L, lua.Number(image.texture.height))
     return 1
@@ -110,7 +89,7 @@ image_get_height : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
 @(private)
 image_get_filter : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     context = runtime.default_context()
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     filter_mode_text := strings.clone_to_cstring(reflect.enum_string(image.filter))
     defer delete(filter_mode_text)
@@ -121,7 +100,7 @@ image_get_filter : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
 
 @(private)
 image_set_filter : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     image.filter = lutils.checkenum(L, 2, FilterMode)
     rl.SetTextureFilter(image.texture, image.filter == .nearest ? .POINT : .BILINEAR)
@@ -132,7 +111,7 @@ image_set_filter : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
 @(private)
 image_get_wrap : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
     context = runtime.default_context()
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     wrap_mode_text := strings.clone_to_cstring(reflect.enum_string(image.wrap))
     defer delete(wrap_mode_text)
@@ -143,7 +122,7 @@ image_get_wrap : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
 
 @(private)
 image_set_wrap : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     image.wrap = lutils.checkenum(L, 2, WrapMode)
     rl.SetTextureWrap(image.texture, cast(rl.TextureWrap)image.wrap)
@@ -153,16 +132,8 @@ image_set_wrap : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
 
 @(private)
 delete_image : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
-    image := lutils.checkudataoftype(L, 1, Image, MODNAME)
+    image := lutils.checkuserdataoftype(L, 1, TNAME_IMAGE, Image)
 
     rl.UnloadTexture(image.texture)
-    return 0
-}
-
-@(private)
-delete_font : lua.CFunction : proc "c" (L : ^lua.State) -> c.int {
-    font := lutils.checkudataoftype(L, 1, Font, MODNAME)
-
-    rl.UnloadFont(font^)
     return 0
 }

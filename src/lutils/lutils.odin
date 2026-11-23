@@ -10,7 +10,6 @@ import lua "vendor:lua/5.4"
 // checkenum reads the string argument at idx and converts it to a value of Enum_Type.
 // The accepted strings are the enum's field names. Raises
 // an argument error when the value at idx is not one of those names.
-//
 // Returns the enum value corresponding to the supplied field name.
 checkenum :: proc "contextless" (L: ^lua.State, idx: c.int, $Enum_Type: typeid) -> Enum_Type {
     context = runtime.default_context()
@@ -35,27 +34,39 @@ checkenum :: proc "contextless" (L: ^lua.State, idx: c.int, $Enum_Type: typeid) 
     return result
 }
 
-// Retrieves argument at idx as a pointer to T. The argument must be of type userdata.
-// Raises an argument error if the value at idx is not userdata matching the specified type T.
-// Typechecking is done by accessing the userdatas "meta.__name" against "modname.type" where type is the
-// reflected name of T (This means T must be a named type!).
-checkudataoftype :: proc "contextless" (L: ^lua.State, idx: c.int, $T: typeid, modname: string) -> ^T {
-    context = runtime.default_context()
+// Registers a new metatable with the provided name and containing the provided methods.
+registeruserdatatype :: proc "contextless" (L: ^lua.State, $name: cstring, methods: []lua.L_Reg) {
+    lua.L_newmetatable(L, name)
+    lua.pushvalue(L, -1)
+    lua.setfield(L, -2, "__index")
 
-    typeinfo, ok := type_info_of(T).variant.(reflect.Type_Info_Named)
-    assert(ok, "Unnamed type")
-    name := typeinfo.name
+    lua.L_setfuncs(L, raw_data(methods), 0)
 
-    value := cast(^T)lua.L_checkudata(
-        L,
-        idx,
-        fmt.caprint(modname, ".", name, sep = "", allocator = context.temp_allocator),
-    )
+    lua.pop(L, 1)
+}
+
+// Creates new full userdata of type T.
+// Pushes the newly created userdata onto the stack and returns a pointer to the created data.
+newuserdataoftype :: proc "contextless" (L: ^lua.State, $name: cstring, $T: typeid) -> ^T {
+    if lua.L_getmetatable(L, name) == auto_cast lua.TNIL {
+        lua.L_error(L, "Tried to create an instance of unregistered type `%s`.", name)
+    }
+
+    userdata := cast(^T)lua.newuserdata(L, size_of(T))
+    lua.L_setmetatable(L, name)
+
+    return userdata
+}
+
+// Retrieves argument at idx as a pointer to T.
+// Raises an argument error if the value at idx is not userdata registered with the specified name.
+checkuserdataoftype :: proc "contextless" (L: ^lua.State, idx: c.int, $name: cstring, $T: typeid) -> ^T {
+    value := cast(^T)lua.L_checkudata(L, idx, name,)
     lua.L_argcheck(
         L,
         value == nil,
         idx,
-        fmt.caprintf("cannot access module context (%s.%s)", modname, name, allocator = context.temp_allocator),
+        "Expected userdata of type " + name,
     )
 
     return value

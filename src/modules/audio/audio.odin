@@ -66,53 +66,13 @@ open_audio : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
         lua.error(L)
     }
 
-    register_types(L)
+    lutils.registeruserdatatype(L, TNAME_SOURCE, Source_Methods)
 
     // initialize the audio context
     audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
     audio_context.source_refrences = new([dynamic]int)
 
     lua.L_newlib(L, Audio_Module_Library)
-    return 1
-}
-
-@(private)
-new_source : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
-    context = runtime.default_context()
-
-    check_if_audio_device_is_ready()
-
-    n_args := lua.gettop(L)
-
-    audio_context := lutils.getmodcontext(L, MODNAME, Audio_Context, nil)
-
-    filename := lua.L_checkstring(L, 1)
-
-    type: SourceType
-    if n_args >= 2 {
-        type = lutils.checkenum(L, 2, SourceType)
-    } else {
-        type = .static
-    }
-
-    source := cast(^Source)lua.newuserdata(L, size_of(Source))
-    lua.L_setmetatable(L, "odinslove.audio.Source")
-    refrence := lutils.weakref(L, lua.REGISTRYINDEX)
-
-    // push the newly created source on top of the stack so it can be returned
-    lutils.getweakref(L, lua.REGISTRYINDEX, refrence)
-
-    source.paused = false // music isn't paused, even if it isn't playing
-    source.volume = 1
-    source^.id = auto_cast refrence
-
-    switch type {
-    case .static: source.audio = rl.LoadSound(filename)
-    case .stream: source.audio = rl.LoadMusicStream(filename)
-    }
-
-    append_elem(audio_context.source_refrences, auto_cast refrence)
-
     return 1
 }
 
@@ -138,7 +98,7 @@ play : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     n_args := lua.gettop(L)
     if n_args == 0 do return 0
     for i in 1 ..= n_args {
-        source := lutils.checkudataoftype(L, i, Source, MODNAME)
+        source := lutils.checkuserdataoftype(L, 1, TNAME_SOURCE, Source)
         switch audio in source.audio {
         case rl.Music:
             if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
@@ -197,7 +157,7 @@ pause : lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 
     // pause each audio provided in args
     for i in 1 ..= n_args {
-        source := lutils.checkudataoftype(L, i, Source, MODNAME)
+        source := lutils.checkuserdataoftype(L, 1, TNAME_SOURCE, Source)
         switch audio in source.audio {
         case rl.Music:
             if !rl.IsMusicValid(audio) do handle_invalid_audio_error(L)
