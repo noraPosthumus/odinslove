@@ -115,7 +115,7 @@ call_mousepressed :: proc(L: ^lua.State, mouse_position: rl.Vector2, button: rl.
     if lua.isfunction(L, -1) {
         lua.pushnumber(L, auto_cast mouse_position.x)
         lua.pushnumber(L, auto_cast mouse_position.y)
-        lua.pushinteger(L, auto_cast button)
+        lua.pushinteger(L, auto_cast button + 1)
         err := lua.pcall(L, 3, 0, 0)
         if err != auto_cast lua.OK {
             msg := lua.tostring(L, -1)

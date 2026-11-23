@@ -1,10 +1,11 @@
 package core
 
-import "odinslove:modules/input"
 import "core:os"
 import "odinslove:modules/audio"
 import "odinslove:modules/graphics"
 import "odinslove:modules/window"
+import "odinslove:modules/input"
+import "odinslove:modules/mouse"
 import "core:c"
 import lua "vendor:lua/5.4"
 import rl "vendor:raylib"
@@ -15,6 +16,7 @@ Libs :: enum{
     audio,
     window,
     input,
+    mouse,
 }
 
 // Initializes a new lua state, loads the specified libraries and runs the specified lua code. Also calls the "odinslove.load" callback inside lua.
@@ -136,6 +138,11 @@ init_lua :: proc(libs: bit_set[Libs]) -> ^lua.State {
     if .input in libs {
         input.require_input(L)
         lua.setfield(L, -2, "input")
+    }
+
+    if .mouse in libs {
+        mouse.require_mouse(L)
+        lua.setfield(L, -2, "mouse")
     }
 
     lua.setglobal(L, "odinslove")
