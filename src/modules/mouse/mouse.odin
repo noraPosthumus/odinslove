@@ -16,10 +16,13 @@ Methods :: []lua.L_Reg {
     {"getPosition", get_position},
     {"getX", get_x},
     {"getY", get_y},
-    {"getY", get_y},
     {"isDown", is_down},
+    {"isUp", is_up},
+    {"isVisble", is_visible},
+    {"setPosition", set_position},
     {"setX", set_x},
     {"setY", set_y},
+    {"setVisible", set_visible},
     {nil, nil},
 }
 
@@ -73,10 +76,22 @@ set_visible: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
 @(private)
 is_down: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
     result := false
-    for i in 2..=lua.gettop(L) {
+    for i in 1..=lua.gettop(L) {
         button := int(lua.L_checkinteger(L, i)) - 1
         lua.L_argcheck(L, button >= int(min(rl.MouseButton)) && button <= int(max(rl.MouseButton)), i, "Unknown mouse button.")
         result ||= rl.IsMouseButtonDown(rl.MouseButton(button))
+    }
+    lua.pushboolean(L, auto_cast result)
+    return 1
+}
+
+@(private)
+is_up: lua.CFunction : proc "c" (L: ^lua.State) -> c.int {
+    result := false
+    for i in 1..=lua.gettop(L) {
+        button := int(lua.L_checkinteger(L, i)) - 1
+        lua.L_argcheck(L, button >= int(min(rl.MouseButton)) && button <= int(max(rl.MouseButton)), i, "Unknown mouse button.")
+        result ||= rl.IsMouseButtonUp(rl.MouseButton(button))
     }
     lua.pushboolean(L, auto_cast result)
     return 1

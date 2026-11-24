@@ -3,11 +3,15 @@
 ---@module "graphics"
 ---@module "audio"
 ---@module "window"
+---@module "input"
+---@module "mouse"
 
 ---@class (exact) odinslove
 ---@field graphics graphics
 ---@field audio audio
 ---@field window window
+---@field input input
+---@field mouse mouse
 ---@field draw fun()
 ---@field update fun(dt: number)
 ---@field load fun()
