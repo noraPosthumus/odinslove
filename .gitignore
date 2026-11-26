@@ -2,3 +2,4 @@ odinslove
 odinslove.debug
 *.bin
 generated__*.*
+dist

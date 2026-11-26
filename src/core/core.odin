@@ -21,7 +21,8 @@ Libs :: enum{
 
 // Initializes a new lua state, loads the specified libraries and runs the specified lua code. Also calls the "odinslove.load" callback inside lua.
 // Important: Call this after creating a raylib window.
-init :: proc(lua_source_files: ..cstring, libs: bit_set[Libs] = {.standard, .graphics, .audio, .window}, lua_source_code: cstring = "") -> ^lua.State {
+@(export)
+init :: proc(lua_source_files: ..cstring, libs: bit_set[Libs] = {.standard, .graphics, .audio, .window, .input, .mouse,}, lua_source_code: cstring = "") -> ^lua.State {
 
     if !rl.IsWindowReady() {
         rl.TraceLog(.FATAL, "Window not initialized. Make sure to call `rl.InitWindow()` before initializing odinslove.")
@@ -62,6 +63,7 @@ init :: proc(lua_source_files: ..cstring, libs: bit_set[Libs] = {.standard, .gra
 }
 
 // This needs to be called once every frame. Calls the "odinslove.update" callback inside lua.
+@(export)
 update :: proc(L: ^lua.State, delta_time : f32) {
     for audio_source in audio.get_all_sources(L) {
         #partial switch audio in audio_source.audio {
@@ -96,12 +98,14 @@ update :: proc(L: ^lua.State, delta_time : f32) {
 }
 
 // This needs to be called once every frame between `rl.BeginDrawing()` and `rl.EndDrawing()`. Calls the "odinslove.draw" callback inside lua.
+@(export)
 draw :: proc(L: ^lua.State) {
     call_draw(L)
 }
 
 // This needs to be called before exiting the game. Calls the "odinslove.quit" callback inside lua.
-// Important: It also closes the lua state.
+// Important: It also closes the lua state
+@(export)
 quit :: proc(L: ^lua.State) {
     call_quit(L)
     lua.close(L)
